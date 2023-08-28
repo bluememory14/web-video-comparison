@@ -2,7 +2,7 @@
 
 A video comparison tool written in html5 for comparing two images or videos side by side in the same window. This tool does not require any dependency. You can just drag your images or videos onto the web page to compare them immediately.
 
-[Web Video Comparison](https://bluememory14.github.io/web-video-comparison/video-comparison.html)
+[Web Video Comparison](https://bluememory14.github.io/web-video-comparison/index.html)
 
 ## Screenshots
 
