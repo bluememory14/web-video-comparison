@@ -1,0 +1,3027 @@
+<!DOCTYPE html>
+<html lang="en">
+    <header>
+        <link rel="icon" href="data:," />
+        <style type="text/css">
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding:0;
+            }
+
+            /*
+                z-index summary: 
+                    left-container: 1
+                    right-container: 2
+                    left-content: 3
+                    right-content: 4
+                    splitter: 5
+                    thumbnail: 6
+                    left-info, right-info, debug-message: 7
+                    left-file-drop-area, right-file-drop-area: 8
+                    context-menu: 10
+            */
+            
+            .vc-container {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                background: lightgray;
+                overflow: hidden;
+                font-family: "Segoe UI";
+            }
+
+            .vc-container .vc-left-container {
+                position: absolute;
+                margin: auto;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1;
+            }
+
+            .vc-container .vc-left-content {
+                display: inline-block;
+                position: relative;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                z-index: 3;
+                /* background: #aacdd2; */
+            }
+
+            .vc-container .vc-left-item {
+                position: absolute;
+                margin: auto;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+
+            .vc-container .vc-right-container {
+                position: absolute;
+                margin: auto;
+                top: 0;
+                left: 50%;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                z-index: 2;
+            }
+
+            .vc-container .vc-right-content {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                z-index: 4;
+                /* background: #cdaad2; */
+            }
+
+            .vc-container .vc-right-item {
+                position: absolute;
+                margin: auto;
+                margin-left: 0;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: translateX(-900px);
+            }
+
+            .vc-container .vc-splitter {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                width: 8px;
+                height: 100%;
+                background: rgb(212,212,212);
+                opacity: 0.25;
+
+                cursor: ew-resize;
+                z-index: 5;
+            }
+
+            .vc-container .vc-thumbnail {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                max-width: 200px;
+                max-height: 200px;
+                background: transparent;
+                overflow: hidden;
+                border-radius: 3px;
+                border: 3px rgb(170, 170, 170) solid;
+                z-index: 6;
+            }
+
+            .vc-container .vc-thumbnail-pointer {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 4px;
+                height: 4px;
+                background: red;
+                border-radius: 4px;
+            }
+
+            .vc-container .vc-thumbnail-boundary {
+                position: absolute;
+                top: 0;
+                left: 0;
+                background: transparent;
+                border-radius: 4px;
+                border: 2px rgb(255, 148, 148) solid;
+            }
+
+            .vc-container .vc-left-info {
+                position: absolute;
+                right: 0;
+                top: 0;
+                z-index: 7;
+                padding: 0 4;
+                text-align: right;
+                background-color: #ffffff80;
+            }
+
+            .vc-container .vc-right-info {
+                position: absolute;
+                left: 0;
+                top: 0;
+                z-index: 7;
+                padding: 0 4;
+                text-align: left;
+                background-color: #ffffff80;
+            }
+
+            .vc-container .vc-prevent-select {
+                -webkit-user-select: none; /* Safari */
+                -ms-user-select: none; /* IE 10 and IE 11 */
+                user-select: none; /* Standard syntax */
+            }
+
+            .vc-container .vc-left-file-drop-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 0;
+                height: calc(100% - 5px);
+                border: 15px green dashed;
+                z-index: 8;
+                display: none;
+                background-color: lightgray;
+            }
+            
+            .vc-container .vc-right-file-drop-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 0;
+                height: calc(100% - 5px);
+                border: 15px green dashed;
+                z-index: 8;
+                display: none;
+                background-color: lightgray;
+            }
+
+            .vc-container .vc-left-file-drop-area > p, .vc-container .vc-right-file-drop-area > p{
+                position: relative;
+                text-align: center;
+                top: 50%;
+                -ms-transform: translateY(-50%);
+                transform: translateY(-50%);
+                font-weight: bold;
+                font-size: x-large;
+            }
+
+            .vc-container .vc-left-file-drop-area input, .vc-container .vc-right-file-drop-area input{
+                margin: 8px;
+            }
+
+            .vc-container img {
+                image-rendering: auto;
+            }
+
+            /*
+            Context Menu
+            */
+
+            .vc-container .vc-context-menu {
+                position: fixed;
+                padding: 8px 0;
+                z-index: 10;
+                width: 290px;
+                border-radius: 8px;
+                background: white;
+                box-shadow: 0px 2px 4px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .vc-container .vc-context-menu:focus {
+                outline:none;
+            }
+
+            .vc-container .vc-context-menu > .vc-context-menu-item {
+                display: flex;;
+                padding: 0;
+                font-size: 13px;
+                font-family: "Segoe UI";
+                color: #202124;
+                cursor: pointer;
+                min-height: 24px;
+            }
+
+            .vc-container .vc-context-menu > .vc-context-menu-item:hover {
+                background: #E8E8E9;
+            }
+
+            .vc-container .vc-context-menu > .vc-context-menu-item:focus {
+                background: #E8E8E9;
+                outline: none;
+            }
+
+            .vc-container .vc-context-menu > .vc-context-menu-item > .vc-context-menu-item-icon {
+                margin: auto 0;
+                padding-left: 4px;
+                max-height: 24px;
+                max-width: 30px;
+                min-width: 30px;
+            }
+
+            .vc-container .vc-context-menu > .vc-context-menu-item > .vc-context-menu-item-text{
+                margin: auto 0 auto 4px;
+                max-width: 200px;
+            }
+
+            .vc-container .vc-context-menu > .vc-context-menu-item > .vc-context-menu-item-shortcut{
+                margin: auto 0;
+                padding-right: 16px;
+                text-align: right;
+                flex-grow: 1;   /* Take remaining space*/
+            }
+
+            /*
+            Debug
+            */
+            .vc-container .vc-debug-message {
+                position: absolute;
+                left: 50;
+                top: 250;
+                z-index: 5;
+                font-size: x-large;
+                padding: 8px;
+            }
+
+            /* Video control */
+            .vc-container .vc-video-controls {
+                position: absolute;
+                bottom: -500px;
+                left: 206px;
+                right: 0px;
+                padding: 0 15px 5px 15px;
+                margin: 0;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+
+                background-image: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.8));
+                transition: bottom 0.2s ease-in, visibility 0.2s ease;
+                z-index: 4;
+            }
+
+            .vc-container .vc-video-controls > li {
+                list-style: none;
+                display: flex;
+                padding-bottom: 8px;
+            }
+
+            .vc-container .vc-video-controls button {
+                background-color: rgba(0,0,0,0);
+                border: none;
+                color: white;
+                width: 40px;
+            }
+
+            .vc-container .vc-video-controls button > i {
+                width: 12px;
+            }
+
+            .vc-container .vc-video-controls i{
+                font-size: 24px;
+            }
+
+            .vc-container .vc-video-controls .vc-progress-container{
+                flex: 0 0 100%;
+            }
+
+            .vc-container .vc-video-controls .vc-progress-container > progress::-webkit-progress-value {background-color: rgba(255,0,0,0.7) !important;}
+            .vc-container .vc-video-controls .vc-progress-container > progress::-webkit-progress-bar {background-color: rgba(128, 128, 128, 0.5) !important;}
+            .vc-container .vc-video-controls .vc-progress-container > progress::-moz-progress-bar {background-color: rgba(128, 128, 128, 0.5) !important;}
+            .vc-container .vc-video-controls .vc-progress-container > progress {color: rgba(255,0,0,0.7);}
+            .vc-container .vc-video-controls .vc-progress-container > progress {
+                width: 100%;
+                height: 15px;
+
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+
+                border-color: rgba(0,0,0,0);
+                border-style: solid;
+                border-width: 6px 0 6px 0;
+            }
+
+            .vc-container .vc-video-controls .vc-progress-container > progress:hover{
+                cursor: pointer;
+            }
+            
+            /*
+            Play / Pause
+            */
+            .vc-container .vc-video-controls .vc-play-pause:hover{
+                cursor: pointer;
+            }
+
+            /*
+            Mute / Unmute
+            */
+            .vc-container .vc-video-controls .vc-mute-unmute:hover{
+                cursor: pointer;
+            }
+
+            .vc-container .vc-video-controls .vc-volume-input-container{
+                max-width: 0px;
+                overflow: hidden;
+                display: flex;
+                transition: max-width 0.2s ease-in;
+            }
+
+            /********** Range Input Styles **********/
+            /*Range Reset*/
+            .vc-container .vc-video-controls .vc-volume-input {
+                --value: 50%;
+
+                -webkit-appearance: none;
+                appearance: none;
+                cursor: pointer;
+                width: 100px;
+
+                background: transparent;
+                border: none;
+                margin: 0;
+            }
+            
+            /***** Chrome, Safari, Opera and Edge Chromium styles *****/
+            /* slider track */
+            .vc-container .vc-video-controls .vc-volume-input::-webkit-slider-runnable-track {
+                /* background-color: grey; */
+                height: 5px;
+
+                background: rgba(255, 255, 255, 0.6);
+                background-image: linear-gradient(#ff4500, #ff4500);
+                background-size: var(--value) 100%;
+                background-repeat: no-repeat;
+            }
+            
+            /* slider thumb */
+            .vc-container .vc-video-controls .vc-volume-input::-webkit-slider-thumb {
+                -webkit-appearance: none; /* Override default look */
+                appearance: none;
+                margin-top: -3px; /* Centers thumb on the track */
+
+                /*custom styles*/
+                background-color: white;
+                height: 9px;
+                border-radius: 9px;
+                width: 9px;
+            }
+            
+            .vc-container .vc-video-controls .vc-volume-input:focus::-webkit-slider-thumb {   
+                outline: none;
+            }
+
+            /*
+            current time
+            */
+            .vc-container .vc-video-controls .vc-current-time-container {   
+                align-items: center;
+            }
+            .vc-container .vc-video-controls .vc-current-time {   
+                padding-left: 8px;
+                color: white;
+                font-size: 18px;
+            }
+
+            /*
+            playback speed
+            */
+            .vc-container .vc-video-controls .vc-current-playback-speed-container {   
+                align-items: center;
+            }
+
+            .vc-container .vc-video-controls .vc-current-playback-speed {   
+                padding: 0 8px;
+                color: white;
+                font-size: 18px;
+            }
+
+            .vc-container .vc-video-controls .vc-playback-speed-button {
+                z-index: 1;
+            }
+
+            .vc-container .vc-video-controls .vc-playback-speed-button:hover {
+                cursor: pointer;
+            }
+
+            .vc-container .vc-video-controls .vc-playback-speed-menu {
+                position: absolute;
+                bottom: 36px;
+                right: 30px;
+                display: block;
+                flex-direction: column;
+                font-family: Roboto, 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+                padding: 2px 8px 24px 8px;
+            }
+
+            .vc-container .vc-video-controls .vc-playback-speed-menu > div {
+                display: block;
+                margin: 2px;
+                padding-top: 6px;
+                padding-bottom: 6px;
+                background-color: rgba(64,64,64,0.8);
+                border-radius: 16px;
+                width: 70px;
+                text-align: center;
+                color: whitesmoke;
+                font-size:14px;
+            }
+
+            .vc-container .vc-video-controls .vc-playback-speed-menu > div:hover {
+                cursor: pointer;
+            }
+
+            .vc-container .vc-video-controls .vc-playback-speed-menu > div.active {
+                background-color: #1d80d6;
+            }
+
+            /*
+            fullscreen
+            */
+            .vc-container  .vc-video-controls .vc-fullscreen:hover{
+                cursor: pointer;
+            }
+        </style>
+    </header>
+
+<body>
+    <div id="Video-Comparison">
+    </div>
+    
+    <script>
+        var VideoComparison = (function() {
+            'use strict';
+
+            var VideoComparison = function (selector, options) {
+                if (selector === "document") {
+                    this.dom = document;
+                } else if (selector === "window") {
+                    this.dom = window;
+                } else if (typeof(selector) === "string") {
+                    this.dom = document.querySelector(selector);
+                }
+                else {
+                    this.dom = selector;
+                }
+
+                if (this.dom === null)
+                    throw new Error(`Failed to query the element by the selector: ${selector}`);
+
+                // class variables:
+                this.minimumDisplaySize = 206;
+                this.showDebugMessage = false;
+
+                this.originalSize = {width: 0, height: 0, aspect: 0};
+
+                this.leftItem = {fileName: "", width: 0, height: 0, aspect: 0, isLoadingVideo: false, isImage: false, isVideo: false};
+                this.rightItem = {fileName: "", width: 0, height: 0, aspect: 0, isLoadingVideo: false, isImage: false, isVideo: false};
+
+                this.zoomX = 0;
+                this.zoomY = 0;
+                this.scale = 0;
+                this.thumbnailScale = 0;
+                this.splitterValue = 0;
+
+                this.displayLeft = 0;
+                this.displayTop = 0;
+                this.displayWidth = 0;
+                this.displayHeight = 0;
+
+
+                this.isZoomMoving = false;
+                
+                this.videoStatus = {
+                    isPaused: false,
+                    isSyncing: false,
+                    currentTime: 0.0,
+                    playbackRate: 1.0,
+
+                    unsyncCount: 0,
+                    waitCount: 0,
+                }
+                
+                this.isContextMenuActive = false;
+                this.isVideoControlActive = true;
+                this.isVideoControlLock = false;
+
+                this.setup();
+
+                if (options && (options.leftFileName || options.rightFileName)){
+
+                    if (options.leftFileName){
+                        if (this.utility.isImage(options.leftFileName)){
+                            this.leftItem.fileName = options.leftFileName;
+                            this.elements.leftImage.src = options.leftFileName;
+                            this.elements.thumbnailImage.src = options.leftFileName;
+                        }
+                        else if (this.utility.isVideo(options.leftFileName)){
+                            this.leftItem.fileName = options.leftFileName;
+                            this.leftItem.isLoadingVideo = true;
+                            this.elements.leftVideo.src = options.leftFileName;
+                            this.elements.thumbnailVideo.src = options.leftFileName;
+                        }
+                        else{
+                            console.error(`The file format is not support: ${options.leftFileName}`)
+                        }
+                    
+                        // Hide the file drop area when the image is loading.
+                        this.elements.leftFileDropArea.style.display = "none"
+                    }
+                    if (options.rightFileName){
+                        if (this.utility.isImage(options.rightFileName)){
+                            this.rightItem.fileName = options.rightFileName;
+                            this.elements.rightImage.src = options.rightFileName;
+                        }
+                        else if (this.utility.isVideo(options.rightFileName)){
+                            this.rightItem.fileName = options.rightFileName;
+                            this.rightItem.isLoadingVideo = true;
+                            this.elements.rightVideo.src = options.rightFileName;
+                        }
+                        else{
+                            console.error(`The file format is not support: ${options.rightFileName}`)
+                        }
+                        this.elements.rightFileDropArea.style.display = "none"
+                    }
+
+                }
+
+                setTimeout(() => {
+                    this.reset();
+                }, 50);
+            };
+
+
+
+            VideoComparison.prototype.setup = function () {
+                
+                // ==================== Setup the dom ====================
+
+                // Icon source: https://fonts.google.com/icons
+                this.dom.classList.add("vc-container");
+                this.dom.innerHTML = `
+                    <div class="vc-left-container">
+                        <div class="vc-left-content">
+                            <div class="vc-left-info"></div>
+                            <img class="vc-left-item" src="" draggable="false" style="display: none"/>
+                            <video class="vc-left-item" src="" style="display: none"></video>
+                        </div>
+                    </div>
+                    <div class="vc-splitter"></div>
+                    <div class="vc-right-container">
+                        <div class="vc-right-content">
+                            <div class="vc-right-info"></div>
+                            <img class="vc-right-item" src="" draggable="false" style="display: none"/>
+                            <video class="vc-right-item" src="" style="display: none"></video>
+                        </div>
+                    </div>
+                    <div class="vc-thumbnail">
+                        <img class="vc-thumbnail-item" src="" draggable="false" style="display: none"/>
+                        <video class="vc-thumbnail-item" style="display: none"></video>
+                        <div class="vc-thumbnail-pointer"></div>
+                        <div class="vc-thumbnail-boundary"></div>
+                    </div>
+                    <div class="vc-left-file-drop-area" draggable="false">
+                        <p>Drop Image or Video File Here<br/>
+                            <input class="vc-left-file-input" type="file" draggable="false" ondragstart="event.preventDefault()" ondrop="event.preventDefault()"/>
+                        </p>
+                        
+                    </div>
+                    <div class="vc-right-file-drop-area" draggable="false">
+                        <p>Drop Image or Video File Here<br/>
+                            <input class="vc-right-file-input" type="file" draggable="false" ondragstart="event.preventDefault()" ondrop="event.preventDefault()"/>
+                        </p>
+                    </div>
+
+                    <div class="vc-debug-message"></div>
+
+                    <ul class="vc-video-controls">
+                        <li class="vc-progress-container">
+                            <progress class="vc-progress" value="0" min="0">
+                                <span class="vc-progress-bar"></span>
+                            </progress>
+                        </li>
+                        <li class="vc-play-pause-container">
+                            <button class="vc-play-pause" type="button">
+                                <svg class="vc-play" width="100%" height="100%" style="display:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="M320-203v-560l440 280-440 280Z"/></svg>
+                                <svg class="vc-pause" width="100%" height="100%" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="M555-200v-560h175v560H555Zm-325 0v-560h175v560H230Z"/></svg>
+                            </button>
+                        </li>
+                        <li class="vc-volume-container">
+                            <button class="vc-mute-unmute" type="button">
+                                <svg class="vc-volume-low" width="100%" height="100%" style="display:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="M560-131v-62q97-28 158.5-107.5T780-481q0-101-61-181T560-769v-62q124 28 202 125.5T840-481q0 127-78 224.5T560-131ZM120-360v-240h160l200-200v640L280-360H120Zm420 48v-337q55 17 87.5 64T660-480q0 57-33 104t-87 64Z"/></svg>
+                                <svg class="vc-volume-mute" width="100%" height="100%" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="M813-56 681-188q-28 20-60.5 34.5T553-131v-62q23-7 44.5-15.5T638-231L473-397v237L273-360H113v-240h156L49-820l43-43 764 763-43 44Zm-36-232-43-43q20-34 29.5-72t9.5-78q0-103-60-184.5T553-769v-62q124 28 202 125.5T833-481q0 51-14 100t-42 93ZM643-422l-90-90v-130q47 22 73.5 66t26.5 96q0 15-2.5 29.5T643-422ZM473-592 369-696l104-104v208Z"/></svg>
+                            </button>
+                            <div class="vc-volume-input-container">
+                                <input class="vc-volume-input" type="range" min="0" max="100" step="1"></input>
+                            </div>
+                        </li>
+                        <li class="vc-current-time-container">
+                            <div class="vc-current-time">00:00 / 00:00</div>
+                        </li>
+                        <li style="width: 30px; visibility: hidden">
+                        </li>
+                        <li style="margin-left: auto;">
+                        </li>
+                        <li class="vc-current-playback-speed-container">
+                            <div class="vc-current-playback-speed">1.0 X</div>
+                        </li>
+                        <li class="vc-playback-speed-container">
+                            <button class="vc-playback-speed-button" type="button">
+                                <svg class="vc-play-circle" width="100%" height="100%" style="display:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="m383-310 267-170-267-170v340Zm97 230q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"/></svg>
+                            </button>
+                            <div class="vc-playback-speed-menu" style="display:none">
+                                <div value="3.0">3.0 X</div>
+                                <div value="2.0">2.0 X</div>
+                                <div value="1.5">1.5 X</div>
+                                <div value="1.25">1.25X</div>
+                                <div class="active" value="1.0">1.0 X</div>
+                                <div value="0.75">0.75 X</div>
+                                <div value="0.5">0.5 X</div>
+                                <div value="0.25">0.25 X</div>
+                            </div>
+                        </li>
+                        
+                        <li class="vc-fullscreen-container">
+                            <button class="vc-fullscreen" type="button">
+                                <svg class="vc-fullscreen" width="100%" height="100%" style="display:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="M200-200v-193h60v133h133v60H200Zm0-367v-193h193v60H260v133h-60Zm367 367v-60h133v-133h60v193H567Zm133-367v-133H567v-60h193v193h-60Z"/></svg>
+                                <svg class="vc-fullscreen-exit" width="100%" height="100%" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path fill="white" d="M333-200v-133H200v-60h193v193h-60Zm234 0v-193h193v60H627v133h-60ZM200-567v-60h133v-133h60v193H200Zm367 0v-193h60v133h133v60H567Z"/></svg>
+                            </button>
+                        </li>
+                    </ul>
+
+                    
+
+                    <div class="vc-context-menu vc-prevent-select" style="visibility: hidden;" tabindex="-1" >
+                        <div class="vc-context-menu-item" tabindex="0" name="show-fle-information">
+                            <div class="vc-context-menu-item-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M378-246 154-470l43-43 181 181 384-384 43 43-427 427Z"/></svg>
+                            </div>
+                            <div class="vc-context-menu-item-text">Show File Information</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="show-splitter">
+                            <div class="vc-context-menu-item-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M378-246 154-470l43-43 181 181 384-384 43 43-427 427Z"/></svg>
+                            </div>
+                            <div class="vc-context-menu-item-text">Show Splitter</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="show-thumbnail">
+                            <div class="vc-context-menu-item-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M378-246 154-470l43-43 181 181 384-384 43 43-427 427Z"/></svg>
+                            </div>
+                            <div class="vc-context-menu-item-text">Show Thumbnail</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="show-video-control">
+                            <div class="vc-context-menu-item-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M378-246 154-470l43-43 181 181 384-384 43 43-427 427Z"/></svg>
+                            </div>
+                            <div class="vc-context-menu-item-text">Show Video Control</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="show-left-item">
+                            <div class="vc-context-menu-item-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M378-246 154-470l43-43 181 181 384-384 43 43-427 427Z"/></svg>
+                            </div>
+                            <div class="vc-context-menu-item-text">Show Left Item</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="show-right-item">
+                            <div class="vc-context-menu-item-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M378-246 154-470l43-43 181 181 384-384 43 43-427 427Z"/></svg>
+                            </div>
+                            <div class="vc-context-menu-item-text">Show Right Item</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <hr/>
+                        <div class="vc-context-menu-item" tabindex="0" name="remove-left-item">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Remove Left Item</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="remove-right-item">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Remove Right Item</div>
+                            <div class="vc-context-menu-item-shortcut"></div>
+                        </div>
+                        <hr/>
+                        <div class="vc-context-menu-item" tabindex="0" name="fit-window">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Fit Window</div>
+                            <div class="vc-context-menu-item-shortcut">f</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="zoom-in">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Zoom In</div>
+                            <div class="vc-context-menu-item-shortcut">+</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="zoom-out">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Zoom Out</div>
+                            <div class="vc-context-menu-item-shortcut">-</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="fullscreen">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Fullscreen</div>
+                            <div class="vc-context-menu-item-shortcut">Double Click</div>
+                        </div>
+                        <hr/>
+                        <div class="vc-context-menu-item" tabindex="0" name="play-pause">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Play / Pause</div>
+                            <div class="vc-context-menu-item-shortcut">Space</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="mute-unmute">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Mute / Unmute</div>
+                            <div class="vc-context-menu-item-shortcut">m</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="increase-volume">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Increase Volume</div>
+                            <div class="vc-context-menu-item-shortcut">Arrow Up</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0"name="decrease-volume">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Decrease Volume</div>
+                            <div class="vc-context-menu-item-shortcut">Arrow Down</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="backward">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Backward 5 Seconds</div>
+                            <div class="vc-context-menu-item-shortcut">Arrow Left</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="forward">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Forward 5 Seconds</div>
+                            <div class="vc-context-menu-item-shortcut">Arrow Right</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="increase-playback-rate">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Increase Playback Rate</div>
+                            <div class="vc-context-menu-item-shortcut">&gt;</div>
+                        </div>
+                        <div class="vc-context-menu-item" tabindex="0" name="decrease-playback-rate">
+                            <div class="vc-context-menu-item-icon"></div>
+                            <div class="vc-context-menu-item-text">Decrease Playback Rate</div>
+                            <div class="vc-context-menu-item-shortcut">&lt;</div>
+                        </div>
+                    </div>
+                    
+                `
+
+                // ==================== Reference the dom elements ====================
+
+                this.elements = {}
+                this.elements.leftContainer = this.dom.querySelector(".vc-left-container");
+                this.elements.leftImage = this.dom.querySelector("img.vc-left-item");
+                this.elements.leftVideo = this.dom.querySelector("video.vc-left-item");
+
+                this.elements.rightContainer = this.dom.querySelector(".vc-right-container");
+                this.elements.rightImage = this.dom.querySelector("img.vc-right-item");
+                this.elements.rightVideo = this.dom.querySelector("video.vc-right-item");
+                
+                this.elements.splitter = this.dom.querySelector(".vc-splitter");
+
+                this.elements.thumbnail = this.dom.querySelector(".vc-thumbnail");
+                this.elements.thumbnailImage = this.dom.querySelector("img.vc-thumbnail-item");
+                this.elements.thumbnailVideo = this.dom.querySelector("video.vc-thumbnail-item");
+
+                this.elements.thumbnailPointer = this.dom.querySelector(".vc-thumbnail-pointer");
+                this.elements.thumbnailBoundary = this.dom.querySelector(".vc-thumbnail-boundary");
+
+                this.elements.leftInfo = this.dom.querySelector(".vc-left-info");
+                this.elements.rightInfo = this.dom.querySelector(".vc-right-info");
+
+                this.elements.leftFileDropArea = this.dom.querySelector(".vc-left-file-drop-area");
+                this.elements.leftFileInput = this.dom.querySelector(".vc-left-file-input");
+                this.elements.rightFileDropArea = this.dom.querySelector(".vc-right-file-drop-area");
+                this.elements.rightFileInput = this.dom.querySelector(".vc-right-file-input");
+
+                this.elements.contextMenu = this.dom.querySelector(".vc-context-menu");
+                this.elements.debugMessage = this.dom.querySelector(".vc-debug-message");
+
+
+                // Video controls
+                this.elements.videoControls = this.dom.querySelector(".vc-video-controls");
+
+                this.elements.progress = this.dom.querySelector(".vc-progress");
+                this.elements.progressBar = this.dom.querySelector(".vc-progress-bar");
+                this.elements.playpause = this.dom.querySelector(".vc-play-pause");
+                this.elements.volumneContainer = this.dom.querySelector(".vc-volume-container");
+                this.elements.muteButton = this.dom.querySelector(".vc-mute-unmute");
+                this.elements.volumeInput = this.dom.querySelector(".vc-volume-input");
+                this.elements.currentTimeDisplay = this.dom.querySelector(".vc-current-time");
+                this.elements.playbackSpeedDisplay = this.dom.querySelector(".vc-current-playback-speed");
+                this.elements.playbackSpeedContainer = this.dom.querySelector(".vc-playback-speed-container");
+                this.elements.playbackSpeedButton = this.dom.querySelector(".vc-playback-speed-button");
+                this.elements.playbackSpeedMenu = this.dom.querySelector(".vc-playback-speed-menu");
+                this.elements.fullscreen = this.dom.querySelector(".vc-fullscreen");
+
+
+                // Load style once
+                this.styles = {
+                    fileDropAreaBorderWidth: this.utility.round(parseFloat(
+                        getComputedStyle(this.elements.leftFileDropArea, null).getPropertyValue('border-width')
+                    ), 0),
+                    thumbnailBorderWidth: this.utility.round(parseFloat(
+                        getComputedStyle(this.elements.thumbnail, null).getPropertyValue('border-width')
+                    ), 0),
+                    thumbnailMaxWidth: parseInt(
+                        getComputedStyle(this.elements.thumbnail, null).getPropertyValue('max-width')
+                    ),
+                    thumbnailMaxHeight: parseInt(
+                        getComputedStyle(this.elements.thumbnail, null).getPropertyValue('max-height')
+                    ),
+
+                    splitterWidth: this.elements.splitter.getBoundingClientRect().width,
+                    thumbnailPointerWidth: this.elements.thumbnailPointer.getBoundingClientRect().width,
+                    thumbnailPointerHeight: this.elements.thumbnailPointer.getBoundingClientRect().height,
+
+                    volumeInputWidth: this.elements.volumeInput.getBoundingClientRect().width,
+                }
+
+
+
+                this.getDomSize();  // set domLeft, domTop, domWidth, domHeight
+                this.splitterValue = this.domWidth / 2
+                this.lastDomWidth = this.domWidth;
+                this.lastDomHeight = this.domHeight;
+                
+
+
+                // ==================== Add event listener ====================
+                const resizeObserver = new ResizeObserver((entries) => {
+
+                    this.getDomSize();
+
+                    var isFullscreen = !!document.fullscreenElement;
+                    var fullscreenData = this.dom.getAttribute("data-fullscreen")
+
+                    if (isFullscreen){
+                        // enter fullscreen
+                        var newScale = this.getFullWindowScale();
+                        this.zoomAtDomPosition(this.domWidth / 2, this.domHeight/ 2, newScale)
+                        this.moveZoomArea(this.originalSize.width / 2, this.originalSize.height / 2, this.domWidth / 2, this.domHeight / 2)
+                    }
+                    else if (fullscreenData){
+                        // exit fullscreen
+                        var newScale = this.getFullWindowScale();
+                        this.zoomAtDomPosition(this.domWidth / 2, this.domHeight/ 2, newScale)
+                        this.moveZoomArea(this.originalSize.width / 2, this.originalSize.height / 2, this.domWidth / 2, this.domHeight / 2)
+                        this.dom.setAttribute("data-fullscreen", false);
+                    }
+                    else{
+                        this.updateImageTransform();
+                        this.updateThumbnailBoundary();
+                    }
+
+                    var splitterValueRatio = this.splitterValue / this.lastDomWidth;
+                    var newSplitterValue = this.utility.setMinMax(splitterValueRatio * this.domWidth, 50, this.domWidth - 50)
+                    this.moveSplitter(newSplitterValue)
+
+                    this.lastDomWidth = this.domWidth;
+                    this.lastDomHeight = this.domHeight;
+                });
+
+                resizeObserver.observe(this.dom);
+
+
+                // Move zoom area when click/drag on image/video
+                [this.elements.leftImage, this.elements.leftVideo, this.elements.rightImage, this.elements.rightVideo].forEach((element) => {
+                    element.addEventListener("mousedown", (e) => {
+                        if (e.which === 3 && this.isContextMenuActive) return;
+                        e.preventDefault();     // prevent text highlight
+
+                        this.isZoomMoving = true;
+
+                        var domPosition = this.utility.getDomPositionFromEvent(e, this.dom)
+                        var domX = domPosition[0];
+                        var domY = domPosition[1];
+
+                        var pixelPosition = this.domPositionToPixel(domX, domY)
+                        var pixelX = pixelPosition[0] 
+                        var pixelY = pixelPosition[1] 
+
+                        var mouseMoveHandler = (e) => {
+                            var domPosition = this.utility.getDomPositionFromEvent(e, this.dom)
+                            var domX = domPosition[0];
+                            var domY = domPosition[1];
+
+                            this.moveZoomArea(pixelX, pixelY, domX, domY)
+                        }
+                        var mouseUpHandler = (e) => {
+                            this.isZoomMoving = false;
+                            document.removeEventListener("mousemove", mouseMoveHandler);
+                            document.removeEventListener("mouseup", mouseUpHandler);
+                        }
+                        
+                        document.addEventListener("mousemove", mouseMoveHandler);
+                        document.addEventListener("mouseup", mouseUpHandler);
+                    })
+                });
+
+
+                // Fullscreen when double click on image/video
+                if (document?.fullscreenEnabled) {
+                    [this.elements.leftImage, this.elements.leftVideo, this.elements.rightImage, this.elements.rightVideo].forEach((element) => {
+                        element.addEventListener("dblclick", (e) => {
+                            this.toggleFullscreen();
+                        });
+                    });
+
+                    this.elements.fullscreen.addEventListener("click", (e) => {
+                        this.toggleFullscreen();
+                    })
+
+                    document.addEventListener("fullscreenchange", (e) => {
+                        var isDomFullscreen = document.fullscreenElement === this.dom;
+                        this.updateFullscreenUI(isDomFullscreen);
+                    })
+                }
+                else{
+                    this.elements.fullscreen.style.display = "none";
+                    this.elements.contextMenu.querySelector("div[name='fullscreen']").style.display = "none";
+                }
+
+                // set thumbnail pointer when mouse move on image/video
+                [this.elements.leftImage, this.elements.leftVideo, this.elements.rightImage, this.elements.rightVideo, this.elements.thumbnail].forEach((element) => {
+                    element.addEventListener("mouseleave", (e) => {
+                        this.hideThumbnailPointer();
+                        this.elements.thumbnailPointer.style.opacity = 0;
+                    })
+
+                    element.addEventListener("mouseenter", (e) => {
+                        this.showThumbnailPointer();
+                    })
+                });
+
+                [this.elements.leftImage, this.elements.leftVideo, this.elements.rightImage, this.elements.rightVideo].forEach((element) => {
+                    element.addEventListener("mousemove", (e) => {
+                        if (!this.isZoomMoving){
+                            var domPosition = this.utility.getDomPositionFromEvent(e, this.dom)
+                            var domX = domPosition[0];
+                            var domY = domPosition[1];
+
+                            var pixelPosition = this.domPositionToPixel(domX, domY);
+                            var pixelX = pixelPosition[0]
+                            var pixelY = pixelPosition[1]
+                            this.drawThumbnailPointer(pixelX, pixelY);
+                        }
+                    })
+                });
+
+                // set thumbnail pointer when mouse move on thumbnail
+                this.elements.thumbnail.addEventListener("mousemove", (e) => {
+                    if (!this.isZoomMoving){
+                        var thumbnailPosition = this.utility.getDomPositionFromEvent(e, this.elements.thumbnail)
+                        var thumbnailX = thumbnailPosition[0] - this.styles.thumbnailPointerWidth / 2;
+                        var thumbnailY = thumbnailPosition[1] - this.styles.thumbnailPointerHeight / 2;
+
+                        var pixelPosition = this.thumbnailPositionToPixel(thumbnailX, thumbnailY);
+                        var pixelX = pixelPosition[0]
+                        var pixelY = pixelPosition[1]
+                        this.drawThumbnailPointer(pixelX, pixelY);
+                    }
+                });
+                
+                // zoom to the position when mouse click/drag
+                this.elements.thumbnail.addEventListener("mousedown", (e) => {
+                    e.preventDefault();     // prevent text highlight
+
+                    var mouseMoveHandler = (e) => {
+                        var thumbnailPosition = this.utility.getDomPositionFromEvent(e, this.elements.thumbnail)
+                        var thumbnailX = thumbnailPosition[0] - this.styles.thumbnailPointerWidth / 2;
+                        var thumbnailY = thumbnailPosition[1] - this.styles.thumbnailPointerHeight / 2;
+
+                        var pixelPosition = this.thumbnailPositionToPixel(thumbnailX, thumbnailY);
+                        var pixelX = pixelPosition[0]
+                        var pixelY = pixelPosition[1]
+                        this.moveZoomArea(pixelX, pixelY, this.domWidth / 2, this.domHeight / 2)
+                    }
+                    var mouseUpHandler = (e) => {
+                        document.removeEventListener("mousemove", mouseMoveHandler);
+                        document.removeEventListener("mouseup", mouseUpHandler);
+                    }
+
+                    mouseMoveHandler(e);
+                    document.addEventListener("mousemove", mouseMoveHandler);
+                    document.addEventListener("mouseup", mouseUpHandler);
+                });
+
+                // zoom in and out when wheel on thumbnail
+                this.elements.thumbnail.addEventListener("wheel", (e) => {
+                    e.preventDefault();
+                    var newScale = this.getScrollScale(e.deltaY);
+                    var domRect = this.elements.thumbnailBoundary.getBoundingClientRect();
+                    if (e.clientX >= domRect.left 
+                        && e.clientX <= domRect.right
+                        && e.clientY >= domRect.top
+                        && e.clientY <= domRect.bottom
+                    ){
+                        // Wheel within the thumbnail boundary.
+                        var thumbnailPosition = this.utility.getDomPositionFromEvent(e, this.elements.thumbnail);
+                        var thumbnailX = thumbnailPosition[0] - this.styles.thumbnailPointerWidth / 2;
+                        var thumbnailY = thumbnailPosition[1] - this.styles.thumbnailPointerHeight / 2;
+
+                        var pixelPosition = this.thumbnailPositionToPixel(thumbnailX, thumbnailY);
+                        var pixelX = pixelPosition[0]
+                        var pixelY = pixelPosition[1]
+
+                        this.zoomAtPixel(pixelX, pixelY, newScale);
+                    }
+                    else{
+                        this.zoomAtDomPosition(this.domWidth / 2, this.domHeight/ 2, newScale)
+                    }
+                });
+
+                // Zoom in and out when wheel on image/video
+                [this.elements.leftImage, this.elements.leftVideo, this.elements.rightImage, this.elements.rightVideo].forEach((element) => {
+                    element.addEventListener("wheel", (e) => {
+                        if (e.deltaY !== 0){
+                            e.preventDefault();
+                            var domPosition = this.utility.getDomPositionFromEvent(e, this.dom)
+                            var domX = domPosition[0];
+                            var domY = domPosition[1];
+                            var newScale = this.getScrollScale(e.deltaY);
+                            this.zoomAtDomPosition(domX, domY, newScale)
+                        }
+                    });
+                });
+                
+                // Set maximum scale when double click on thumbnail
+                this.elements.thumbnail.addEventListener("dblclick", (e) => {
+                    this.fitWindow();
+                });
+
+
+                // ====================
+                // Move Splitter event 
+                // ====================
+
+                this.elements.splitter.addEventListener("mousedown", (e) => {
+                    e.preventDefault();     // prevent text highlight
+                    var mouseMoveHandler = (e) => {
+                        var domPosition = this.utility.getDomPositionFromEvent(e, this.dom);
+                        var domX = domPosition[0];
+                        var splitterValue = this.utility.setMinMax(domX, 50, this.domWidth - 50);
+                        this.moveSplitter(splitterValue);
+                    }
+                    var mouseUpHandler = (e) => {
+                        document.removeEventListener("mousemove", mouseMoveHandler);
+                        document.removeEventListener("mouseup", mouseUpHandler);
+                    }
+                    document.addEventListener("mousemove", mouseMoveHandler);
+                    document.addEventListener("mouseup", mouseUpHandler);
+                });
+
+                // Reset splitter when double click on splitter
+                this.elements.splitter.addEventListener("dblclick", (e) => {
+                    this.moveSplitter(this.domWidth / 2);
+                });
+                
+                
+                // ====================
+                // File drop
+                // ====================
+
+                this.dom.addEventListener("dragover", (e) => {
+                    var isFile = e.dataTransfer.types.length && e.dataTransfer.types.indexOf('Files') != -1
+                    if (!isFile) return;
+                    e.preventDefault();
+
+                    if (e.clientX <= this.splitterValue){
+                        this.elements.leftFileDropArea.style.display = "block"
+
+                        if (this.rightItem.width !== 0){
+                            this.elements.rightFileDropArea.style.display = "none"
+                        }
+                    }
+                    else{
+                        if (this.leftItem.width !== 0){
+                            this.elements.leftFileDropArea.style.display = "none"
+                        }
+                        this.elements.rightFileDropArea.style.display = "block"
+                    }
+                });
+
+                this.dom.addEventListener("dragenter", (e) => {
+                    e.preventDefault();
+                });
+                
+                this.dom.addEventListener("dragleave", (e) => {
+                    if (e.target === this.elements.leftFileDropArea){
+                        if (this.leftItem.width !== 0){
+                            this.elements.leftFileDropArea.style.display = "none"
+                        }
+                    }
+
+                    if (e.target === this.elements.rightFileDropArea){
+                        if (this.rightItem.width !== 0){
+                            this.elements.rightFileDropArea.style.display = "none"
+                        }
+                    }
+                });
+
+                this.dom.addEventListener("drop", (e) => {
+                    if (e.dataTransfer.files.length === 0) return;
+
+                    // Dropping files
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (e.dataTransfer) {
+                        var which;
+                        if (e.clientX <= this.splitterValue){
+                            which = "left";
+                        }
+                        else{
+                            which = "right";
+                        }
+                        this.loadFiles(e.dataTransfer.files, which)
+                    }
+                    return false;
+                });
+
+                this.elements.leftFileInput.addEventListener("change", (e) => {
+                    if (this.elements.leftFileInput.files.length > 0){
+                        this.loadFiles(this.elements.leftFileInput.files, "left")
+                    }
+                });
+                
+                this.elements.rightFileInput.addEventListener("change", (e) => {
+                    if (this.elements.rightFileInput.files.length > 0){
+                        this.loadFiles(this.elements.rightFileInput.files, "right")
+                    }
+                });
+
+                // End File Drop Event
+
+                // ====================
+                // Video Control Event
+                // ====================
+                
+                // On video loaded, reset the display size
+                this.elements.leftVideo.addEventListener("loadedmetadata", (e) => {
+                    this.leftItem.isLoadingVideo = false;
+                    this.elements.thumbnailVideo.src = this.elements.leftVideo.src;
+                    this.handleFileChange();
+                });
+
+                this.elements.rightVideo.addEventListener("loadedmetadata", (e) => {
+                    this.rightItem.isLoadingVideo = false;
+                    this.handleFileChange();
+                });
+
+                this.elements.leftVideo.addEventListener("error", (e) => {
+                    this.leftItem.isLoadingVideo = false;
+                });
+
+                this.elements.rightVideo.addEventListener("error", (e) => {
+                    this.rightItem.isLoadingVideo = false;
+                });
+
+                this.elements.leftVideo.addEventListener("waiting", (e) => {
+                    this.videoStatus.waitCount += 1;
+                    if (this.videoStatus.waitCount >= 3){
+                        // reduce playbackrate
+                        if (this.videoStatus.playbackRate > 1.0){
+                            this.tooglePlaybackRate(false, false);
+                        }
+                        this.videoStatus.waitCount = 0;
+                    }
+
+                    this.pause()
+                    var canplaythroughHandler = (e) => {
+                        this.videoStatus.currentTime = this.elements.leftVideo.currentTime;
+                        this.syncVideo()
+                        this.elements.leftVideo.removeEventListener("canplaythrough", canplaythroughHandler)
+                    }
+                    this.elements.leftVideo.addEventListener("canplaythrough", canplaythroughHandler)
+                });
+
+                this.elements.rightVideo.addEventListener("waiting", (e) => {
+                    this.videoStatus.waitCount += 1;
+                    if (this.videoStatus.waitCount >= 3){
+                        // reduce playbackrate
+                        if (this.videoStatus.playbackRate > 1.0){
+                            this.tooglePlaybackRate(false, false);
+                        }
+                        this.videoStatus.waitCount = 0;
+                    }
+
+                    this.pause()
+                    var canplaythroughHandler = (e) => {
+                        this.videoStatus.currentTime = this.elements.rightVideo.currentTime;
+                        this.syncVideo()
+                        this.elements.rightVideo.removeEventListener("canplaythrough", canplaythroughHandler)
+                    }
+                    this.elements.rightVideo.addEventListener("canplaythrough", canplaythroughHandler)
+                });
+                
+                // Play / Pause
+                this.elements.playpause.addEventListener("click", (e) => {
+                    this.togglePlayPause()
+                });
+
+                [this.elements.leftVideo, this.elements.rightVideo].forEach((element) => {
+
+                    element.addEventListener("mousedown", (e) => {
+                        if (e.which !== 1) return;
+                        var mousedownX = e.screenX
+                        var mousedownY = e.screenY
+
+                        var mouseupHandler = (e) => {
+                            if (e.which !== 1) return;
+                            this.togglePlayPause()
+                            element.removeEventListener("mouseup", mouseupHandler)
+                            element.removeEventListener("mousemove", mousemoveHandler)
+                        };
+                        var mousemoveHandler = (e) => {
+                            // When document is not focused, an additional mousemove event is raised when use click.
+                            if (e.screenX === mousedownX && e.screenY === mousedownY) return;
+                            element.removeEventListener("mouseup", mouseupHandler)
+                            element.removeEventListener("mousemove", mousemoveHandler)
+                        };
+                        element.addEventListener("mouseup", mouseupHandler)
+                        element.addEventListener("mousemove", mousemoveHandler)
+                    });
+                })
+
+                // Video Progress
+                this.elements.leftVideo.addEventListener("timeupdate", (e) => {
+                    this.handleTimeUpdate();
+                });
+
+                this.elements.rightVideo.addEventListener("timeupdate", (e) => {
+                    if (!this.leftItem.isVideo) this.handleTimeUpdate();
+                });
+
+                this.elements.leftVideo.addEventListener("ended", (e) => {
+                    this.videoStatus.isPaused = true;
+                    this.updatePlayPauseUI();
+                });
+
+                this.elements.rightVideo.addEventListener("ended", (e) => {
+                    if (!this.leftItem.isVideo) {
+                        this.videoStatus.isPaused = true;
+                        this.updatePlayPauseUI();
+                    }
+                });
+
+                this.elements.progress.addEventListener("click", (e) => {
+                    var videoList = this.getVideoList();
+                    if (videoList.length === 0) return;
+                    
+                    const rect = this.elements.progress.getBoundingClientRect();
+                    const pos = (e.pageX - rect.left) / this.elements.progress.offsetWidth;
+
+                    this.videoStatus.currentTime = pos * videoList[0].duration;
+                    this.syncVideo();
+                });
+
+                this.elements.progress.addEventListener("mousemove", (e) => {
+                    if (e.buttons === 1){
+                        var videoList = this.getVideoList();
+                        if (videoList.length === 0) return;
+                        
+                        const rect = this.elements.progress.getBoundingClientRect();
+                        const pos = (e.pageX - rect.left) / this.elements.progress.offsetWidth;
+
+                        this.videoStatus.currentTime = pos * videoList[0].duration;
+                        this.syncVideo();
+                    }
+                });
+                
+                // Mute / Unmute
+                this.elements.muteButton.addEventListener("click", (e) => {
+                    this.toogleMuteUnmute();
+                });
+
+                // Set volume
+                this.elements.volumeInput.addEventListener("input", (e) => {
+                    let target = e.target;
+                    const min = target.min;
+                    const max = target.max;
+                    const val = target.value;
+                    this.alterVolume(val / 100);
+                });
+
+                // Show volume input when mouse over.
+                this.elements.volumneContainer.addEventListener("mouseover", (e) => {
+                    this.elements.volumneContainer.setAttribute("mouseover", "true");
+                    this.elements.volumeInput.parentElement.style.maxWidth = this.styles.volumeInputWidth + "px";
+                });
+
+                this.elements.volumneContainer.addEventListener("mouseout", (e) => {
+                    this.elements.volumneContainer.setAttribute("mouseover", "");
+                    if (!this.elements.volumeInput.getAttribute("focus")){
+                        this.elements.volumeInput.parentElement.style.maxWidth = "0px";
+                    }
+                });
+
+                this.elements.volumeInput.addEventListener("focus", (e) => {
+                    this.elements.volumeInput.setAttribute("focus", "true");
+                    this.elements.volumeInput.parentElement.style.maxWidth = this.styles.volumeInputWidth + "px";
+                });
+
+                this.elements.volumeInput.addEventListener("focusout", (e) => {
+                    this.elements.volumeInput.setAttribute("focus", "");
+                    if (document.hasFocus() && !this.elements.volumneContainer.getAttribute("mouseover")){
+                        this.elements.volumeInput.parentElement.style.maxWidth = "0px"; 
+                    }
+                });
+
+                // Allow to change volume by wheel
+                this.elements.volumeInput.parentElement.parentElement.addEventListener("wheel", (e) => {
+                    if (e.wheelDelta <= 0){
+                        this.decreaseVolume()
+                    } else {
+                        this.increaseVolume()
+                    }
+                }, {passive: false});
+
+
+                // Video Playback Speed
+                this.elements.playbackSpeedButton.addEventListener("click", (e) => {
+                    var allowLoop = true;
+                    this.tooglePlaybackRate(true, allowLoop);
+                });
+
+                var playbackMenuItems = this.elements.playbackSpeedMenu.getElementsByTagName("div")
+                for (const item of playbackMenuItems){
+                    item.addEventListener("click", (e) => {
+                        let target = e.target
+
+                        this.setPlaybackRate(target.getAttribute("value"))
+                        
+                        const tempList = this.elements.playbackSpeedMenu.getElementsByClassName("active");
+                        for (const temp of tempList){
+                            temp.classList.remove("active")
+                        }
+                        target.classList.add("active")
+                    })
+                }
+
+                this.elements.playbackSpeedButton.parentElement.addEventListener("mouseover", (e) => {
+                    this.elements.playbackSpeedMenu.style.display = "block"
+                });
+
+                this.elements.playbackSpeedButton.parentElement.parentElement.addEventListener("mouseout", (e) => {
+                    this.elements.playbackSpeedMenu.style.display = "none"
+                });
+
+                
+                // Double click to lock the video control
+                this.elements.videoControls.addEventListener("dblclick", (e) => {
+                    this.isVideoControlLock = !this.isVideoControlLock;
+                })
+
+                this.dom.addEventListener("mouseleave", (e) => {
+                    if (this.isVideoControlActive) this.hideVideoControl()
+                })
+
+                this.elements.videoControls.addEventListener("mouseleave", (e) => {
+                    this.elements.videoControls.setAttribute("mouseover", "")
+                })
+
+                this.elements.videoControls.addEventListener("mouseover", (e) => {
+                    this.elements.videoControls.setAttribute("mouseover", "true")
+                })
+
+                var mouseMoveHandler = (e) => {
+                    this.showVideoControl();
+                };
+                
+                this.elements.leftVideo.addEventListener("play", (e) => {
+                    this.setTimer_hideVideoControl()
+                    this.dom.addEventListener("mousemove", mouseMoveHandler)
+                })
+                
+                this.elements.leftVideo.addEventListener("pause", (e) => {
+                    this.showVideoControl();
+                    this.dom.removeEventListener("mousemove", mouseMoveHandler)
+                })
+
+                // End Video Control Event
+
+                // ====================
+                // Context Menu
+                // ====================
+
+                this.dom.addEventListener("contextmenu", (e) => {
+                    if (this.isContextMenuActive) {
+                        return;
+                    };
+
+                    e.preventDefault();
+
+                    let mouseX = e.clientX || e.touches[0].clientX;
+                    let mouseY = e.clientY || e.touches[0].clientY;
+                    
+                    let menuHeight = this.elements.contextMenu.getBoundingClientRect().height;
+                    let menuWidth = this.elements.contextMenu.getBoundingClientRect().width;
+
+                    let windowWidth = window.innerWidth;
+                    let windowHeight = window.innerHeight;
+
+                    if (windowWidth - mouseX >= menuWidth) {
+                        this.elements.contextMenu.style.left = mouseX + "px";
+                    }
+                    else {
+                        // display on left
+                        this.elements.contextMenu.style.left = mouseX - menuWidth + "px";
+                    }
+
+                    if (mouseY < menuHeight){
+                        // display on bottom
+                        this.elements.contextMenu.style.top = mouseY + "px";
+                    }
+                    else if (windowHeight - mouseY >= menuHeight) {
+                        // display on bottom
+                        this.elements.contextMenu.style.top = mouseY + "px";
+                    }
+                    else{
+                        // display on top
+                        this.elements.contextMenu.style.top = mouseY - menuHeight + "px";
+                    }
+                    
+                    this.elements.contextMenu.style.visibility = "visible";
+                    this.isContextMenuActive = true;
+
+                    this.elements.contextMenu.focus();
+                    
+                    // Click anywhere execpt the contextmenu, or right click again, will hide the context menu.
+                    this.elements.contextMenu.hideContextMenuHandler = (e) => {
+                        if (!this.elements.contextMenu.contains(e.target)) {
+                            this.elements.contextMenu.style.visibility = "hidden";
+                            this.isContextMenuActive = false;
+                            this.dom.removeEventListener("contextmenu", this.elements.contextMenu.hideContextMenuHandler);
+                            document.removeEventListener("click", this.elements.contextMenu.hideContextMenuHandler);
+                            document.removeEventListener("keydown", this.elements.contextMenu.keydownHandler);
+                            this.elements.contextMenu.hideContextMenuHandler = null;
+                            this.elements.contextMenu.keydownHandler = null;
+                        }
+                    }
+
+                    this.elements.contextMenu.keydownHandler = (e) => {
+                        if (e.key === "Escape"){
+                            this.elements.contextMenu.style.visibility = "hidden";
+                            this.isContextMenuActive = false;
+                            this.dom.removeEventListener("contextmenu", this.elements.contextMenu.hideContextMenuHandler);
+                            document.removeEventListener("click", this.elements.contextMenu.hideContextMenuHandler);
+                            document.removeEventListener("keydown", this.elements.contextMenu.keydownHandler);
+                            this.elements.contextMenu.hideContextMenuHandler = null;
+                            this.elements.contextMenu.keydownHandler = null;
+                        }
+                        else if (e.key === "ArrowUp" || e.key === "ArrowDown"){
+                            var activeElement = document.activeElement;
+                            if (activeElement === this.elements.contextMenu){
+                                if (activeElement.firstElementChild){
+                                    activeElement.firstElementChild.focus();
+                                }
+                            }
+                            else if (activeElement.parentElement  === this.elements.contextMenu){
+                                if (e.key === "ArrowUp"){
+                                    var previousElement = activeElement.previousElementSibling;
+                                    while (previousElement !== null){
+                                        if (previousElement.tagName === "DIV"){
+                                            previousElement.focus();
+                                            break;
+                                        }
+                                        previousElement = previousElement.previousElementSibling;
+                                    }
+                                }
+                                else if (e.key === "ArrowDown"){
+                                    var nextElement = activeElement.nextElementSibling;
+                                    while (nextElement !== null){
+                                        if (nextElement.tagName === "DIV"){
+                                            nextElement.focus();
+                                            break;
+                                        }
+                                        nextElement = nextElement.nextElementSibling;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    this.dom.addEventListener("contextmenu",this.elements.contextMenu.hideContextMenuHandler);
+                    document.addEventListener("click",this.elements.contextMenu.hideContextMenuHandler);
+                    document.addEventListener("keydown", this.elements.contextMenu.keydownHandler);
+                })
+
+                this.elements.contextMenu.querySelectorAll(".vc-context-menu-item").forEach((element) => {
+                    element.addEventListener("click", (e) => {
+                        this.triggerContextMenuItem(element);
+                    })
+                })
+
+                // End Context Menu
+                
+                // ====================
+                // Hotkey
+                // ====================
+
+                document.addEventListener("keydown", (e) => {
+
+                    if (e.target === this.elements.contextMenu){
+                        return;
+                    }
+                    else if (e.target.classList.contains("vc-context-menu-item")
+                    ){
+                        if (e.key === " " || e.key === "Enter"){
+                            e.preventDefault(); e.stopPropagation();
+                            this.triggerContextMenuItem(e.target);
+                            return;
+                        }
+                    }
+                    else if (e.target !== document.body) {
+                        return;
+                    }
+
+                    // General hotkey
+                    if (e.key == "f"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.fitWindow();
+                    }
+                    else if (e.key == "+"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.zoomIn();
+                    }
+                    else if (e.key == "-"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.zoomOut();
+                    }
+
+                    // Video hotkey
+                    if (!this.leftItem.isVideo && !this.rightItem.isVideo){
+                        return;
+                    }
+                    var videoList = this.getVideoList()
+                    if (videoList.length === 0) return;
+
+                    if (e.key === " " && e.target == document.body){
+                        // Space to play/pause
+                        e.preventDefault(); e.stopPropagation();
+                        this.togglePlayPause();
+                    }
+                    else if (e.key == "ArrowLeft"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.backward();
+                    }
+                    else if (e.key == "ArrowRight"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.forward();
+                    }
+                    else if (e.key == "ArrowUp"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.increaseVolume();
+                    }
+                    else if (e.key == "ArrowDown"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.decreaseVolume();
+                    }
+                    else if (e.key == "m"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.toogleMuteUnmute();
+                    }
+                    else if (e.key == "h"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.hideVideoControl();
+                    }
+                    else if (e.key == ">"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.tooglePlaybackRate(true, false);
+                    }
+                    else if (e.key == "<"){
+                        e.preventDefault(); e.stopPropagation();
+                        this.tooglePlaybackRate(false, false);
+                    }
+                });
+
+
+                // ====================
+                // Debug message
+                // ====================
+
+                this.dom.addEventListener("mousemove", (e) => {
+                    if (this.showDebugMessage){
+                        var pageX = e.pageX;
+                        var pageY = e.pageY;
+                        var clientX = e.clientX;
+                        var clientY = e.clientY;
+
+                        var domPosition = this.utility.getDomPositionFromEvent(e, this.dom);
+                        var domX = domPosition[0];
+                        var domY = domPosition[1];
+
+                        var pixelPosition = this.domPositionToPixel(domX, domY);
+                        var pixelX = pixelPosition[0]
+                        var pixelY = pixelPosition[1]
+
+                        this.elements.debugMessage.innerHTML = `
+                            Page position: ${pageX}, ${pageY}<br/>
+                            Client position: ${clientX}, ${clientY}<br/>
+                            domX, domY: ${domX}, ${domY}<br/>
+                            Pixel position: ${pixelX}, ${pixelY}<br/>
+                            ZoomX, ZoomY: ${this.zoomX}, ${this.zoomY}<br/>
+                            DisplayLeft, DisplayTop: ${this.displayLeft}, ${this.displayTop}<br/>
+                            DomWidth, DomHeight: ${this.domWidth}, ${this.domHeight}<br/>
+                            DomLeft, DomTop: ${this.domLeft}, ${this.domTop}<br/>
+                        `
+                    }
+                });
+            }
+
+            //
+            // ==================== Utility functions ====================
+            //
+
+            VideoComparison.prototype.utility = new function (){};
+            
+            VideoComparison.prototype.utility.round = function round(num, scale) {
+                if(!("" + num).includes("e")) {
+                    return +(Math.round(num + "e+" + scale)  + "e-" + scale);
+                } else {
+                    var arr = ("" + num).split("e");
+                    var sig = ""
+                    if(+arr[1] + scale > 0) {
+                        sig = "+";
+                    }
+                    return +(Math.round(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
+                }
+            }
+
+            VideoComparison.prototype.utility.rounddown = function rounddown(num, scale){
+                if(!("" + num).includes("e")) {
+                    return +(Math.floor(num + "e+" + scale)  + "e-" + scale);
+                } else {
+                    var arr = ("" + num).split("e");
+                    var sig = ""
+                    if(+arr[1] + scale > 0) {
+                        sig = "+";
+                    }
+                    return +(Math.floor(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
+                }
+            }
+
+            VideoComparison.prototype.utility.roundup = function roundup(num, scale){
+                if(!("" + num).includes("e")) {
+                    return +(Math.ceil(num + "e+" + scale)  + "e-" + scale);
+                } else {
+                    var arr = ("" + num).split("e");
+                    var sig = ""
+                    if(+arr[1] + scale > 0) {
+                        sig = "+";
+                    }
+                    return +(Math.ceil(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
+                }
+            }
+
+            VideoComparison.prototype.utility.setMinMax = function setMinMax(num, min, max){
+                return Math.min(Math.max(num, min), max);
+            }
+
+            VideoComparison.prototype.utility.formatSeconds = function formatSeconds(totalSeconds){
+                totalSeconds = Math.floor(totalSeconds)
+                const seconds = totalSeconds % 60;
+                const minutes = (totalSeconds - seconds) / 60 % 60
+                const hours = (totalSeconds - seconds - minutes*60) / 3600
+                return {
+                    hours: hours,
+                    minutes: minutes,
+                    seconds: seconds,
+                }
+            };
+
+            VideoComparison.prototype.utility.enlargeProportionally = function enlargeProportionally(width, height, minWidth, minHeight){
+                var aspect = width / height;
+                if (width < minWidth){
+                    width = minWidth;
+                    height = minWidth / aspect;
+                }
+                if (height < minHeight){
+                    height = minHeight;
+                    width = minHeight * aspect;
+                }
+                return [width, height];
+            }
+
+            VideoComparison.prototype.utility.shinkProportionally = function shinkProportionally(width, height, maxWidth, maxHeight){
+                var aspect = width / height;
+                if (width > maxWidth){
+                    width = maxWidth;
+                    height = maxWidth / aspect;
+                }
+                if (height > maxHeight){
+                    height = maxHeight;
+                    width = maxHeight * aspect;
+                }
+                return [width, height];
+            }
+            
+            VideoComparison.prototype.utility.getDomPositionFromEvent = function (e, domElement){
+                if (e.clientX === undefined || e.clientY === undefined){
+                    throw new Error(`The event must be a mouse event.`); 
+                }
+                var domRect = domElement.getBoundingClientRect();
+                return [e.clientX - domRect.left, e.clientY - domRect.top]
+            }
+
+
+            VideoComparison.prototype.utility.isImage = function isImage(filename) {
+                return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(filename);
+            }
+            VideoComparison.prototype.utility.isVideo = function isVideo(filename) {
+                return /\.(mp4|ogg|webm|wav)$/.test(filename);
+            }
+            
+            VideoComparison.prototype.utility.loadImageFile = function loadImageFile(file, domElement){
+                return new Promise((resolve, reject) => {
+                    var reader = new FileReader();  
+                    reader.onload = (e) => {
+                        domElement.src = reader.result;
+                        resolve(reader.result)
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            VideoComparison.prototype.utility.loadVideoFile = function loadVideoFile(file, domElement){
+                return new Promise((resolve, reject) => {
+                    var fileURL = URL.createObjectURL(file)
+
+                    var handler1, handler2;
+                    handler1 = () => {
+                        domElement.removeEventListener("loadedmetadata", handler1);
+                        domElement.removeEventListener("error", handler2);
+                        resolve(fileURL);
+                    }
+                    domElement.addEventListener("loadedmetadata", handler1);
+
+                    handler2 = (event) => {
+                        domElement.removeEventListener("loadedmetadata", handler1);
+                        domElement.removeEventListener("error", handler2);
+                        reject(`Fail to load the file ${file.name}`);
+                    }
+                    domElement.addEventListener("error", handler2);
+                    domElement.src = fileURL
+                });
+            }
+
+            VideoComparison.prototype.utility.timer = new function(){
+                this.timers = {}
+            }
+
+            VideoComparison.prototype.utility.timer.setTimeout = function (name, func, timeout){
+                if (name in this.timers) clearTimeout(this.timers[name])
+                this.timers[name] = setTimeout(func, timeout);
+            }
+            VideoComparison.prototype.utility.timer.clearTimeout = function (name){
+                if (name in this.timers) clearTimeout(this.timers[name])
+                this.timers[name] = null;
+            }
+
+            //
+            // ==================== File functions ====================
+            //
+
+            VideoComparison.prototype.loadFiles = function loadFiles(files, which = "left"){
+                if (files === null || files.length === 0) return;
+
+                if (files.length === 1) {
+                    var promise = this.loadImageOrVideoFile(files[0], which);
+                    promise.catch((e) => {}).finally(() => {
+                        if (which === "left"){
+                            if (this.leftItem.isImage) this.handleFileChange();
+                        }
+                        else{
+                            if (this.rightItem.isImage) this.handleFileChange();
+                        }
+
+                        this.elements.leftFileInput.value = null;
+                        this.elements.rightFileInput.value = null;
+                    })
+                }
+                else if (files.length >= 2) {
+                    var promise1 = this.loadImageOrVideoFile(files[0], "left");
+                    var promise2 = this.loadImageOrVideoFile(files[1], "right");
+                    Promise.all([promise1, promise2]).catch((e) => {}).finally((values) => {
+                        this.reset();
+                    }); 
+                }
+            }
+
+            VideoComparison.prototype.loadImageOrVideoFile = function loadImageOrVideoFile(file, which = "left"){
+                if (this.utility.isImage(file.name)){
+                    if (which.toLowerCase() == "left"){
+                        var promise = this.utility.loadImageFile(file, this.elements.leftImage)
+                        promise.then((result) => {
+                            if (this.elements.leftImage.naturalWidth === 0){
+                                this.elements.leftImage.src = "";
+                                this.elements.thumbnailImage.src = "";
+                                alert(`Fail to load the file ${file.name}`)
+                            }
+                            else{
+                                this.leftItem.fileName = file.name;
+                                this.leftItem.isImage = true;
+                                this.leftItem.isVideo = false;
+                                this.elements.thumbnailImage.src = result;
+                                this.elements.leftVideo.src = "";
+                                this.elements.thumbnailVideo.src = "";
+                            }
+                        })
+                        return promise;
+                    }
+                    else{
+                        var promise = this.utility.loadImageFile(file, this.elements.rightImage)
+                        promise.then((result) => {
+                            if (this.elements.rightImage.naturalWidth === 0){
+                                this.elements.rightImage.src = "";
+                                alert(`Fail to load the file ${file.name}`)
+                            }
+                            else{
+                                this.rightItem.fileName = file.name;
+                                this.rightItem.isImage = true;
+                                this.rightItem.isVideo = false;
+                                this.elements.rightVideo.src = "";
+                            }
+                        })
+                        return promise;
+                    }
+                }
+                else if (this.utility.isVideo(file.name)){
+                    if (which.toLowerCase() == "left"){
+                        var promise = this.utility.loadVideoFile(file, this.elements.leftVideo)
+                        this.leftItem.isLoadingVideo = true;
+
+                        promise.then((result) => {
+                            if (this.elements.leftVideo.videoWidth === 0){
+                                this.elements.leftVideo.src = "";
+                                this.elements.thumbnailVideo.src = "";
+                                alert(`Fail to load the file ${file.name}`)
+                            }
+                            else{
+                                this.leftItem.fileName = file.name;
+                                this.elements.leftImage.src = "";
+                                this.elements.thumbnailImage.src = "";
+
+                                if (this.rightItem.isVideo){
+                                    this.videoStatus.currentTime = this.elements.rightVideo.currentTime;
+                                    this.syncVideo()
+                                }
+                            }
+                        }).catch((error) => {
+                            this.elements.leftVideo.src = "";
+                            alert(`Fail to load the file ${file.name}`)
+                        }).finally(() => {
+                        });
+                        return promise;
+                    }
+                    else{
+                        var promise = this.utility.loadVideoFile(file, this.elements.rightVideo)
+                        this.rightItem.isLoadingVideo = true;
+                        promise.then((result) => {
+                            if (this.elements.rightImage.videoWidth === 0){
+                                this.elements.rightImage.src = "";
+                                alert(`Fail to load the file ${file.name}`)
+                            }
+                            else{
+                                this.rightItem.fileName = file.name;
+                                this.elements.rightImage.src = "";
+
+                                if (this.leftItem.isVideo){
+                                    this.videoStatus.currentTime = this.elements.leftVideo.currentTime;
+                                    this.syncVideo();
+                                }
+                            }
+                        }).catch((error) => {
+                            this.elements.rightVideo.src = "";
+                            alert(`Fail to load the file ${file.name}`)
+                        }).finally(() => {
+                        });
+                        return promise;
+                    }
+                }
+            }
+
+            //
+            // ==================== Splitter UI functions ====================
+            //
+
+            VideoComparison.prototype.moveSplitter = function moveSplitter(domX){
+
+                this.elements.rightContainer.style.left = domX + "px";
+                this.elements.splitter.style.left = domX + "px";
+
+                this.elements.rightImage.style.transform = `translate(${this.displayLeft - domX}px, ${this.zoomY}px)`;
+                this.elements.rightVideo.style.transform = `translate(${this.displayLeft - domX}px, ${this.zoomY}px)`;
+
+                this.elements.leftFileDropArea.style.width = domX - this.styles.fileDropAreaBorderWidth * 2 + "px";
+                this.elements.leftFileDropArea.style.height = this.domHeight - this.styles.fileDropAreaBorderWidth * 2 + "px";
+
+                this.elements.rightFileDropArea.style.left = domX + this.styles.splitterWidth + "px";
+                this.elements.rightFileDropArea.style.width = this.domWidth - domX - this.styles.fileDropAreaBorderWidth * 2 - this.styles.splitterWidth + "px";
+                this.elements.rightFileDropArea.style.height = this.domHeight - this.styles.fileDropAreaBorderWidth * 2 + "px";
+
+                this.elements.leftInfo.style.right = this.domWidth - domX + this.styles.splitterWidth + "px";
+                this.elements.rightInfo.style.left = this.styles.splitterWidth * 2 + "px";
+                this.splitterValue = domX
+            }
+
+            // ==================== Thumbnail UI functions ====================
+
+
+            VideoComparison.prototype.updateThumbnailSize = function updateThumbnailSize(){
+
+                var width = Math.min(this.styles.thumbnailMaxWidth, this.styles.thumbnailMaxHeight * this.originalSize.aspect)
+                var height = Math.min(this.styles.thumbnailMaxHeight, this.styles.thumbnailMaxWidth / this.originalSize.aspect)
+                
+                this.setThumbnailSize(width, height);
+            }
+
+            VideoComparison.prototype.getThumbnailScale = function getThumbnailScale(){
+                return this.elements.thumbnailImage.width / this.originalSize.width;
+            }
+
+            VideoComparison.prototype.setThumbnailSize = function setThumbnailSize(width, height){
+                this.elements.thumbnail.style.width = Math.floor(width) + "px";
+                this.elements.thumbnail.style.height = Math.floor(height) + "px";
+
+                this.elements.thumbnailImage.width = width;
+                this.elements.thumbnailImage.height = height;
+
+                this.elements.thumbnailVideo.width = width;
+                this.elements.thumbnailVideo.height = height;
+
+                this.thumbnailScale = width / this.originalSize.width;
+            }
+
+            VideoComparison.prototype.drawThumbnailPointer = function drawThumbnailPointer(pixelX, pixelY){
+                var elementPosition = this.pixelToThumbnailPosition(pixelX, pixelY)
+                var elementX = elementPosition[0]
+                var elementY = elementPosition[1]
+
+                this.elements.thumbnailPointer.style.left = elementX - this.styles.thumbnailPointerWidth / 2 + "px";
+                this.elements.thumbnailPointer.style.top = elementY - this.styles.thumbnailPointerHeight / 2 + "px";
+            }
+            
+            VideoComparison.prototype.showThumbnailPointer = function showThumbnailPointer(){
+                this.elements.thumbnailPointer.style.opacity = 1;
+            }
+
+            VideoComparison.prototype.hideThumbnailPointer = function showThumbnailPointer(){
+                this.elements.thumbnailPointer.style.opacity = 0;
+            }
+
+            VideoComparison.prototype.updateThumbnailBoundary = function updateThumbnailBoundary(){
+
+                var topLeftPixel = this.domPositionToPixel(0, 0)
+                var bottomRightPixel = this.domPositionToPixel(this.domWidth, this.domHeight)
+
+                var pixelX1 = Math.max(0, Math.min(this.originalSize.width, topLeftPixel[0]))
+                var pixelY1 = Math.max(0, Math.min(this.originalSize.height, topLeftPixel[1]))
+
+                var pixelX2 = Math.max(0, Math.min(this.originalSize.width, bottomRightPixel[0]))
+                var pixelY2 = Math.max(0, Math.min(this.originalSize.height, bottomRightPixel[1]))
+
+                var elementPosition1 = this.pixelToThumbnailPosition(pixelX1, pixelY1)
+                var elementPosition2 = this.pixelToThumbnailPosition(pixelX2, pixelY2)
+
+                this.elements.thumbnailBoundary.style.left = elementPosition1[0] - this.styles.thumbnailBorderWidth + "px";
+                this.elements.thumbnailBoundary.style.top = elementPosition1[1] - this.styles.thumbnailBorderWidth + "px";
+
+                this.elements.thumbnailBoundary.style.width = elementPosition2[0] - elementPosition1[0] + this.styles.thumbnailBorderWidth + "px";
+                this.elements.thumbnailBoundary.style.height = elementPosition2[1] - elementPosition1[1] + this.styles.thumbnailBorderWidth + "px";
+            }
+
+
+            // ==================== Image UI functions ====================
+
+            VideoComparison.prototype.getScrollScale = function getScrollScale(eventDelta){
+                var delta = eventDelta < 0 ? 0.1 : -0.1;
+
+                if (this.scale > 4) delta *= 5;
+                else if (this.scale > 2) delta *= 2;
+
+                var fullScreenScale = this.getFullWindowScale();
+                var newScale = Math.max(0.2, Math.min(64.0, this.utility.round(this.scale + delta, 1)));
+
+                if (fullScreenScale > this.scale && fullScreenScale <= newScale){
+                    newScale = fullScreenScale;
+                }
+                else if (fullScreenScale < this.scale && fullScreenScale >= newScale){
+                    newScale = fullScreenScale;
+                }
+                return newScale;
+            }
+
+            VideoComparison.prototype.getFullWindowScale = function getFullWindowScale(){
+                var scaleX = this.domWidth / this.originalSize.width;
+                var scaleY = this.domHeight / this.originalSize.height;
+                return Math.min(scaleX, scaleY)
+            }
+
+            VideoComparison.prototype.pixelToImagePosition = function pixelToImagePosition(pixelX, pixelY){
+                var x = pixelX * this.scale;
+                var y = pixelY * this.scale;
+                return [this.utility.round(x, 0), this.utility.round(y, 0)]
+            }
+
+            VideoComparison.prototype.imagePositionToPixel = function imagePositionToPixel(x, y){
+                var pixelX = x / this.scale;
+                var pixelY = y / this.scale;
+                return [this.utility.round(pixelX, 0), this.utility.round(pixelY, 0)]
+            }
+
+            VideoComparison.prototype.pixelToThumbnailPosition = function pixelToThumbnailPosition(pixelX, pixelY){
+                var thumbnailScale = this.getThumbnailScale();
+                var x = pixelX * thumbnailScale;
+                var y = pixelY * thumbnailScale;
+                return [this.utility.round(x, 0), this.utility.round(y, 0)]
+            }
+
+            VideoComparison.prototype.thumbnailPositionToPixel = function thumbnailPositionToPixel(x, y){
+                var thumbnailScale = this.getThumbnailScale();
+                var domRect = this.elements.thumbnail.getBoundingClientRect();
+                var itemLeft = domRect.left;
+                var itemTop = domRect.top;
+
+                var pixelX = x / thumbnailScale;
+                var pixelY = y / thumbnailScale;
+                return [this.utility.round(pixelX, 0), this.utility.round(pixelY, 0)]
+            }
+
+            VideoComparison.prototype.pixelToDomPosition = function pixelToDomPosition(pixelX, pixelY){
+                var x = pixelX * this.scale + this.displayLeft;
+                var y = pixelY * this.scale + this.displayTop;
+                return [this.utility.round(x, 0), this.utility.round(y, 0)]
+            }
+
+            VideoComparison.prototype.domPositionToPixel = function domPositionToPixel(x, y){
+                var pixelX = (x - this.displayLeft) / this.scale;
+                var pixelY = (y - this.displayTop) / this.scale;
+                return [this.utility.round(pixelX, 0), this.utility.round(pixelY, 0)]
+            }
+
+
+            VideoComparison.prototype.moveZoomArea = function moveZoomArea(pixelX, pixelY, domX, domY){
+                // Move the pixel to dom position
+                var originalLeft = this.displayLeft - this.zoomX
+                var originalTop = this.displayTop - this.zoomY
+
+                var scaleX = pixelX * this.scale;
+                var scaleY = pixelY * this.scale;
+
+                this.zoomX = scaleX - domX + originalLeft;
+                this.zoomY = scaleY - domY + originalTop;
+
+                this.zoomX = -this.zoomX;
+                this.zoomY = -this.zoomY;
+
+                this.updateImageTransform();
+                this.updateThumbnailBoundary();
+            }
+
+            
+            VideoComparison.prototype.zoomIn = function zoomIn(){
+                this.scale = this.getScrollScale(-150);
+                this.updateImageSize();
+                this.updateImageTransform();
+                this.updateInfo();
+            }
+            VideoComparison.prototype.zoomOut = function zoomIn(){
+                this.scale = this.getScrollScale(+150);
+                this.updateImageSize();
+                this.updateImageTransform();
+                this.updateInfo();
+            }
+
+            VideoComparison.prototype.zoomAtPixel = function zoomAtPixel(pixelX, pixelY, newScale){
+                var domPosition = this.pixelToDomPosition(pixelX, pixelY);
+                var domX = domPosition[0]
+                var domY = domPosition[1]
+                this.scale = newScale;
+                this.updateImageSize();
+                this.updateImageTransform();
+                this.moveZoomArea(pixelX, pixelY, domX, domY);
+                this.updateInfo();
+            }
+
+            VideoComparison.prototype.zoomAtDomPosition = function zoomAtDomPosition(domX, domY, newScale){
+                var pixelPosition = this.domPositionToPixel(domX, domY)
+                var pixelX = pixelPosition[0] 
+                var pixelY = pixelPosition[1] 
+                this.scale = newScale;
+                this.updateImageSize();
+                this.updateImageTransform();
+                this.moveZoomArea(pixelX, pixelY, domX, domY);
+                this.updateInfo();
+            }
+
+
+            VideoComparison.prototype.updateImageTransform = function updateImageTransform(){
+
+                if (this.displayWidth >= this.domWidth){
+                    this.zoomX = Math.max(-(this.displayWidth - this.minimumDisplaySize), this.zoomX)
+                    this.zoomX = Math.min(this.domWidth - this.minimumDisplaySize, this.zoomX)
+
+                    this.displayLeft = this.zoomX;
+                }
+                else{
+                    this.zoomX = Math.max(-(this.displayWidth / 2 + this.domWidth / 2 - this.minimumDisplaySize), this.zoomX)
+                    this.zoomX = Math.min(this.displayWidth / 2 + this.domWidth / 2 - this.minimumDisplaySize, this.zoomX)
+
+                    this.displayLeft = (this.domWidth - this.displayWidth) / 2 + this.zoomX;
+                }
+                
+                if (this.displayHeight >= this.domHeight){
+                    this.zoomY = Math.max(-(this.displayHeight / 2 + this.domHeight / 2 - this.minimumDisplaySize), this.zoomY)
+                    this.zoomY = Math.min(this.displayHeight / 2 + this.domHeight / 2 - this.minimumDisplaySize, this.zoomY)
+
+                    this.displayTop = (this.domHeight - this.displayHeight) / 2 + this.zoomY;
+                }
+                else{
+                    this.zoomY = Math.max(-(this.displayHeight / 2 + this.domHeight / 2 - this.minimumDisplaySize), this.zoomY)
+                    this.zoomY = Math.min(this.displayHeight / 2 + this.domHeight / 2 - this.minimumDisplaySize, this.zoomY)
+
+                    this.displayTop = (this.domHeight - this.displayHeight) / 2 + this.zoomY;
+                }
+
+                this.zoomX = this.utility.round(this.zoomX, 0)
+                this.zoomY = this.utility.round(this.zoomY, 0)
+
+                this.elements.leftImage.style.transform = `translate(${this.zoomX}px, ${this.zoomY}px)`;
+                this.elements.leftVideo.style.transform = `translate(${this.zoomX}px, ${this.zoomY}px)`;
+                this.elements.rightImage.style.transform = `translate(${(this.displayLeft - this.splitterValue)}px, ${this.zoomY}px)`;
+                this.elements.rightVideo.style.transform = `translate(${(this.displayLeft - this.splitterValue)}px, ${this.zoomY}px)`;
+            }
+
+            VideoComparison.prototype.updateImageSize = function updateImageSize(){
+                this.displayWidth = this.originalSize.width * this.scale;
+                this.displayHeight = this.originalSize.height * this.scale;
+
+                this.elements.leftImage.width = this.displayWidth;
+                this.elements.leftImage.height = this.displayHeight;
+                this.elements.leftVideo.width = this.displayWidth;
+                this.elements.leftVideo.height = this.displayHeight;
+                
+                this.elements.rightImage.width = this.displayWidth;
+                this.elements.rightImage.height = this.displayHeight;
+                this.elements.rightVideo.width = this.displayWidth;
+                this.elements.rightVideo.height = this.displayHeight;
+            }
+
+            VideoComparison.prototype.getDomSize = function getDomSize(){
+                var domRect = this.dom.getBoundingClientRect();
+                this.domLeft = domRect.left
+                this.domTop = domRect.top
+                this.domWidth = domRect.width
+                this.domHeight = domRect.height
+            }
+
+            VideoComparison.prototype.getImageOriginalSize = function getImageOriginalSize(){
+                // Left item
+                if (this.elements.leftVideo.videoWidth !== 0){
+                    this.leftItem.isImage = false;
+                    this.leftItem.isVideo = true;
+                    this.leftItem.width = this.elements.leftVideo.videoWidth;
+                    this.leftItem.height = this.elements.leftVideo.videoHeight;
+                }
+                else if (this.elements.leftImage.naturalWidth !== 0){
+                    this.leftItem.isImage = true;
+                    this.leftItem.isVideo = false;
+                    this.leftItem.width = this.elements.leftImage.naturalWidth;
+                    this.leftItem.height = this.elements.leftImage.naturalHeight;
+                }
+                else{
+                    this.leftItem.isImage = false;
+                    this.leftItem.isVideo = false;
+                    this.leftItem.width = 0;
+                    this.leftItem.height = 0;
+                }
+                this.leftItem.aspect = this.leftItem.width / this.leftItem.height
+                
+                // Right item
+                if (this.elements.rightVideo.videoWidth !== 0){
+                    this.rightItem.isImage = false;
+                    this.rightItem.isVideo = true;
+                    this.rightItem.width = this.elements.rightVideo.videoWidth;
+                    this.rightItem.height = this.elements.rightVideo.videoHeight;
+                }
+                else if (this.elements.rightImage.naturalWidth !== 0){
+                    this.rightItem.isImage = true;
+                    this.rightItem.isVideo = false;
+                    this.rightItem.width = this.elements.rightImage.naturalWidth;
+                    this.rightItem.height = this.elements.rightImage.naturalHeight;
+                }
+                else{
+                    this.rightItem.isImage = false;
+                    this.rightItem.isVideo = false;
+                    this.rightItem.width = 0;
+                    this.rightItem.height = 0;
+                }
+                this.rightItem.aspect = this.rightItem.width / this.rightItem.height
+
+                // Set the reference
+                if (this.leftItem.width !== 0){
+                    this.originalSize.width = this.leftItem.width;
+                    this.originalSize.height = this.leftItem.height;
+                    this.originalSize.aspect = this.leftItem.aspect;
+                }
+                else if  (this.rightItem.width !== 0){
+                    this.originalSize.width = this.rightItem.width;
+                    this.originalSize.height = this.rightItem.height;
+                    this.originalSize.aspect = this.rightItem.aspect;
+                }
+                else{
+                    this.originalSize.width = 0;
+                    this.originalSize.height = 0;
+                    this.originalSize.aspect = 0
+                }
+            }
+
+            VideoComparison.prototype.toggleFullscreen = function toggleFullscreen(){
+                if (document.fullscreenElement !== null) {
+                    // The document is in fullscreen mode
+                    document.exitFullscreen();
+                } else {
+                    // The document is not in fullscreen mode
+                    this.dom.requestFullscreen();
+                }
+            }
+
+            VideoComparison.prototype.updateFullscreenUI = function updateFullscreenUI(isFullscreen) {
+                this.dom.setAttribute("data-fullscreen", isFullscreen);
+                if (isFullscreen){
+                    this.elements.fullscreen.querySelector(".vc-fullscreen").style.display = "none"
+                    this.elements.fullscreen.querySelector(".vc-fullscreen-exit").style.display = "block"
+                } else {
+                    this.elements.fullscreen.querySelector(".vc-fullscreen").style.display = "block"
+                    this.elements.fullscreen.querySelector(".vc-fullscreen-exit").style.display = "none"
+                }
+            }
+
+            VideoComparison.prototype.updateInfo = function updateInfo(){
+                var leftScalePercentage = this.utility.round(this.elements.leftImage.width / this.leftItem.width * 100, 0)
+                this.elements.leftInfo.innerHTML = `
+                        File: ${this.leftItem.fileName}<br/>
+                        Size: ${this.leftItem.width} x ${this.leftItem.height}<br/>
+                        Scale: ${leftScalePercentage}%<br/>
+                    `
+
+                var rightScalePercentage = this.utility.round(this.elements.rightImage.width / this.rightItem.width * 100, 0)
+
+                this.elements.rightInfo.innerHTML = `
+                        File: ${this.rightItem.fileName}<br/>
+                        Size: ${this.rightItem.width} x ${this.rightItem.height}<br/>
+                        Scale: ${rightScalePercentage}%<br/>
+                    `
+            }
+
+            
+            VideoComparison.prototype.handleFileChange = function handleFileChange(){
+
+                this.getImageOriginalSize();
+
+                if (this.leftItem.width == 0){
+                    this.elements.leftFileDropArea.style.display = "block"
+                    this.elements.leftInfo.style.display = "none"
+                    
+                    this.elements.leftImage.style.display = "none";
+                    this.elements.leftVideo.style.display = "none";
+                    this.elements.thumbnail.style.display = "none"
+                }
+                else{
+                    this.elements.leftFileDropArea.style.display = "none"
+                    this.elements.leftInfo.style.display = "block"
+                    this.elements.thumbnail.style.display = "block"
+
+                    if (this.leftItem.isImage){
+                        this.elements.leftImage.style.display = null;
+                        this.elements.leftVideo.style.display = "none";
+
+                        this.elements.thumbnailImage.style.display = null;
+                        this.elements.thumbnailVideo.style.display = "none";
+                    }
+                    else if (this.leftItem.isVideo){
+                        this.elements.leftImage.style.display = "none";
+                        this.elements.leftVideo.style.display = null;
+                        
+                        this.elements.thumbnailImage.style.display = "none";
+                        this.elements.thumbnailVideo.style.display = null;
+                    }
+                }
+
+                if (this.rightItem.width == 0){
+                    this.elements.rightFileDropArea.style.display = "block"
+                    this.elements.rightInfo.style.display = "none"
+                }
+                else{
+                    this.elements.rightFileDropArea.style.display = "none"
+                    this.elements.rightInfo.style.display = "block"
+                    
+                    if (this.rightItem.isImage){
+                        this.elements.rightImage.style.display = null;
+                        this.elements.rightVideo.style.display = "none";
+                    }
+                    else if (this.rightItem.isVideo){
+                        this.elements.rightImage.style.display = "none";
+                        this.elements.rightVideo.style.display = null;
+                    }
+                }
+
+                // Video: 
+                if (this.leftItem.isVideo || this.rightItem.isVideo){
+                    this.updateCurrentTimeDisplayUI();
+                    this.showVideoControl();
+
+                    if (this.videoStatus.isPaused) this.pause();
+                    else this.play();
+                    this.updatePlayPauseUI();
+                }
+                else {
+                    this.hideVideoControl();
+                }
+                
+                this.scale = this.getFullWindowScale();
+                this.zoomX = 0;
+                this.zoomY = 0;
+
+                this.updateImageSize();
+                this.updateThumbnailSize();
+                this.updateImageTransform();
+                this.updateThumbnailBoundary();
+                this.updateInfo();
+            }
+
+            VideoComparison.prototype.reset = function reset(){
+                this.getDomSize();
+                this.getImageOriginalSize();
+                this.handleFileChange()
+                
+                this.splitterValue = this.domWidth / 2;
+                this.moveSplitter(this.splitterValue)
+            }
+
+
+            // ==================== Video Functions ====================
+            
+
+            VideoComparison.prototype.getVideoList = function getVideoList(){
+                var videoList = []
+                if (this.leftItem.isVideo){
+                    videoList.push(this.elements.leftVideo);
+                    videoList.push(this.elements.thumbnailVideo);
+                }
+                if (this.rightItem.isVideo){
+                    videoList.push(this.elements.rightVideo);
+                }
+                return videoList;
+            }
+            
+            VideoComparison.prototype.play = function play(){
+                if (this.leftItem.isLoadingVideo || this.rightItem.isLoadingVideo){
+                    return;
+                }
+                var videoList = this.getVideoList();
+
+                var promises = []
+                videoList.forEach((video) => {
+                    promises.push(video.play());
+                })
+                Promise.all(promises).then(()=>{
+                }).catch((error)=>{
+                    if (error.message.includes("The play() request was interrupted by a call to pause().")){
+                        // pass
+                    }
+                    else{
+                        console.log("Fail to play video", error)
+                    }
+                });
+            }
+            
+            VideoComparison.prototype.pause = function pause(){
+                var videoList = this.getVideoList();
+                videoList.forEach((video) => {
+                    video.pause();
+                })
+            }
+            
+            VideoComparison.prototype.togglePlayPause = function togglePlayPause(){
+                var videoList = this.getVideoList();
+                if (videoList.length === 0) return;
+
+                this.videoStatus.isPaused = !this.videoStatus.isPaused;
+
+                if (this.videoStatus.isPaused){
+                    videoList.forEach((video) => {
+                        video.pause();
+                    })
+                    this.updatePlayPauseUI()
+                }
+                else{
+                    if (!this.videoStatus.isSyncing){
+                        this.videoStatus.currentTime = videoList[0].currentTime;
+                        this.syncVideo()
+                    }
+                    this.updatePlayPauseUI()
+                }
+            }
+
+            VideoComparison.prototype.updatePlayPauseUI = function updatePlayPauseUI(){
+                if (this.videoStatus.isPaused){
+                    this.elements.playpause.querySelector(".vc-play").style.display = "block"
+                    this.elements.playpause.querySelector(".vc-pause").style.display = "none"
+                } else {
+                    this.elements.playpause.querySelector(".vc-play").style.display = "none"
+                    this.elements.playpause.querySelector(".vc-pause").style.display = "block"
+                }
+            }
+
+            VideoComparison.prototype.syncVideo = function syncVideo(){
+                if (this.videoStatus.isSyncing) {
+                    return;
+                }
+                var videoList = this.getVideoList();
+                if (videoList.length === 0) return;
+
+                this.videoStatus.isSyncing = true;
+
+                // Pause all video
+                for (const video of videoList) {
+                    if (!video.paused){
+                        video.pause();
+                    }
+                }
+
+                // Set the current time of all video
+                var promises = [];
+                var currentTime = this.videoStatus.currentTime;
+                for (const video of videoList) {
+                    promises.push(this.videoSeek(video, currentTime));
+                }
+
+                // Resume the play / pause status
+                Promise.all(promises).then((results) => {
+                    // Check if videoStatus.currentTime is updated again
+                    if (currentTime === this.videoStatus.currentTime){
+                        // Sync completed. Now resume the play / pause status
+                        if (!this.videoStatus.isPaused){
+                            
+                            for (const video of videoList) {
+                                video.playbackRate = 1;
+                            }
+
+                            var promises = this.play()
+                            
+                            setTimeout(() => {
+                                for (const video of videoList) {
+                                    video.playbackRate = this.videoStatus.playbackRate;
+                                }
+                                this.videoStatus.isSyncing = false;
+                            }, 100);
+                        }
+                        else{
+                            this.videoStatus.isSyncing = false;
+                        }
+                    }
+                    else{
+                        // videoStatus.currentTime is updated. Sync again
+                        setTimeout(() => {
+                            this.videoStatus.isSyncing = false;
+                            this.syncVideo();
+                        }, 100);
+                    }
+                })
+            }
+
+            VideoComparison.prototype.videoSeek = function videoSeek(domElement, currentTime){
+                // Use the event canplaythrough to ensure video is ready to play.
+                return new Promise((resolve, reject) => {
+                    var handler = () => {
+                        domElement.removeEventListener("canplaythrough", handler);
+                        resolve();
+                    }
+                    domElement.addEventListener("canplaythrough", handler);
+                    domElement.currentTime = currentTime
+                });
+            }
+
+
+            VideoComparison.prototype.handleTimeUpdate = function handleTimeUpdate(){
+                this.updateCurrentTimeDisplayUI()
+
+                if (this.leftItem.isLoadingVideo || this.rightItem.isLoadingVideo) return;
+                if (this.videoStatus.isSyncing) return;
+
+                var currentTimes = []
+                var videoList = this.getVideoList();
+                if (videoList.length === 0) return;
+
+                videoList.forEach((video) => {
+                    currentTimes.push(video.currentTime)
+                })
+                
+                var max = Math.max(...currentTimes)
+                var min = Math.min(...currentTimes)
+
+                if (max - min >= 0.02){
+                    this.videoStatus.unsyncCount += 1;
+                }
+                else{
+                    this.videoStatus.unsyncCount = 0;
+                }
+                if (this.videoStatus.unsyncCount >= 3){
+                    this.videoStatus.unsyncCount = 0;
+                    this.videoStatus.currentTime = currentTimes[0]
+                    this.syncVideo()
+                }
+            }
+            
+            VideoComparison.prototype.toogleMuteUnmute = function toogleMuteUnmute(){
+                var videoList = this.getVideoList();
+                if (videoList.length === 0) return;
+
+                var muted = !videoList[0].muted; 
+                if (muted){
+                    // Save last volume
+                    if (this.elements.volumeInput.value === 0){
+                        this.elements.volumeInput.setAttribute("last", 30)
+                    }
+                    else{
+                        this.elements.volumeInput.setAttribute("last", this.elements.volumeInput.value)
+                    }
+                    this.setVolume(0);
+                }
+                else{
+                    // Load last volume
+                    var last = this.elements.volumeInput.getAttribute("last")/100
+                    if (last === 0){
+                        last = 0.3
+                    }
+                    this.setVolume(last);
+                }
+            }
+
+            VideoComparison.prototype.updateMuteUI = function updateMuteUI(value){
+                if (value){
+                    this.elements.muteButton.querySelector(".vc-volume-low").style.display = "none"
+                    this.elements.muteButton.querySelector(".vc-volume-mute").style.display = "block"
+                } else {
+                    this.elements.muteButton.querySelector(".vc-volume-low").style.display = "block"
+                    this.elements.muteButton.querySelector(".vc-volume-mute").style.display = "none"
+                }
+            }
+            
+            VideoComparison.prototype.alterVolume = function alterVolume(value) {
+                this.setVolume(value);
+                this.elements.volumeInput.setAttribute("last", value)
+            }
+
+            VideoComparison.prototype.setVolume = function setVolume(value) {
+                // value in range 0 to 1
+                var videoList = [this.elements.leftVideo, this.elements.thumbnailVideo, this.elements.rightVideo];
+
+                videoList.forEach((video) => {
+                    video.volume = value
+                    video.muted = value === 0
+                })
+
+                this.elements.volumeInput.style.setProperty('--value', value * 100 + '%');
+                this.elements.volumeInput.value = value * 100
+
+                if (value === 0){
+                    this.updateMuteUI(true)
+                } else {
+                    this.updateMuteUI(false)
+                }
+            }
+
+            VideoComparison.prototype.increaseVolume = function increaseVolume(){
+                var videoList = this.getVideoList();
+                if (videoList.length === 0) return;
+
+                if (videoList[0].volume <= 0.95) this.alterVolume(videoList[0].volume + 0.05)
+                else this.alterVolume(1)
+            }
+
+            VideoComparison.prototype.decreaseVolume = function decreaseVolume(){
+                var videoList = this.getVideoList();
+                if (videoList.length === 0) return;
+
+                if (videoList[0].volume >= 0.05) this.alterVolume(videoList[0].volume - 0.05)
+                else this.alterVolume(0)
+            }
+
+            VideoComparison.prototype.forward = function forward(){
+                var videoList = this.getVideoList()
+                videoList.forEach((video) => {
+                    video.currentTime = video.currentTime + 5;
+                });
+            }
+
+            VideoComparison.prototype.backward = function backward(){
+                var videoList = this.getVideoList()
+                videoList.forEach((video) => {
+                    if (video.currentTime - 5 >= 0) video.currentTime -= 5;
+                    else video.currentTime = 0
+                });
+            }
+
+            VideoComparison.prototype.updateCurrentTimeDisplayUI = function updateCurrentTimeDisplayUI(){
+                var videoList = this.getVideoList();
+                if (videoList.length === 0){
+                    this.elements.currentTimeDisplay.innerHTML = "00:00:00 / 00:00:00"
+                    return;
+                }
+
+                var video = videoList[0];
+                if (!this.elements.progress.getAttribute("max"))
+                    this.elements.progress.setAttribute("max", video.duration);
+
+                this.elements.progress.value = video.currentTime;
+                this.elements.progressBar.style.width = `${Math.floor(
+                    (video.currentTime * 100) / video.duration
+                )}%`;
+
+                const currentTime = this.utility.formatSeconds(Math.floor(video.currentTime))
+                const duration = this.utility.formatSeconds(Math.floor(video.duration))
+
+                if (duration.hours == 0){
+                    this.elements.currentTimeDisplay.innerHTML = 
+                        String(currentTime.minutes).padStart(2, '0') 
+                        + ":" 
+                        + String(currentTime.seconds).padStart(2, '0')
+                        + " / "
+                        + String(duration.minutes).padStart(2, '0') 
+                        + ":" 
+                        + String(duration.seconds).padStart(2, '0')
+                }
+                else{
+                    this.elements.currentTimeDisplay.innerHTML = 
+                        String(currentTime.hours).padStart(2, '0') 
+                        + ":" 
+                        + String(currentTime.minutes).padStart(2, '0') 
+                        + ":" 
+                        + String(currentTime.seconds).padStart(2, '0')
+                        + " / "
+                        + String(duration.hours).padStart(2, '0') 
+                        + ":" 
+                        + String(duration.minutes).padStart(2, '0') 
+                        + ":" 
+                        + String(duration.seconds).padStart(2, '0')
+                }
+            }
+
+            VideoComparison.prototype.setPlaybackRate = function setPlaybackRate(value){
+                this.videoStatus.playbackRate = value;
+                
+                this.elements.leftVideo.playbackRate = value;
+                this.elements.thumbnailVideo.playbackRate = value;
+                this.elements.rightVideo.playbackRate = value;
+                this.elements.playbackSpeedDisplay.innerHTML = value + " X";
+            }
+
+            VideoComparison.prototype.tooglePlaybackRate = function tooglePlaybackRate(isIncreaseSpeed = true, allowLoop = false){
+
+                const tempList = this.elements.playbackSpeedMenu.getElementsByClassName("active");
+                var playbackMenuItems = this.elements.playbackSpeedMenu.getElementsByTagName("div")
+
+                if (tempList.length == 0){
+                    for (const item of playbackMenuItems){
+                        if (item.getAttribute("value") == "1.0"){
+                            item.classList.add("active")
+                            this.setPlaybackRate(target.getAttribute("value"));
+                        }
+                    }
+                    return
+                } else {
+                    for (var index = 0 ; index < playbackMenuItems.length ; index++){
+                        var item = playbackMenuItems[index];
+                        if (item.classList.contains("active")){
+                            var targetIndex = null;
+                            
+                            if (isIncreaseSpeed){
+                                if (index == 0) {
+                                    if (allowLoop) targetIndex = playbackMenuItems.length-1
+                                    else return;
+                                }
+                                else targetIndex = index - 1
+                            } else {
+                                if (index == playbackMenuItems.length - 1) {
+                                    if (allowLoop) targetIndex = 0
+                                    else return;
+                                }
+                                else targetIndex = index + 1
+                            }
+                            
+                            const target = playbackMenuItems[targetIndex]
+                            item.classList.remove("active");
+                            target.classList.add("active")
+                            this.setPlaybackRate(target.getAttribute("value"));
+                            break;
+                        }
+                    }
+                }
+            }
+
+            VideoComparison.prototype.showVideoControl = function showVideoControl(){
+                if (this.leftItem.isVideo || this.rightItem.isVideo){
+                    this.elements.videoControls.style.bottom = "0px"
+                    this.elements.videoControls.style.visibility = ""
+                    this.isVideoControlActive = true
+                    if (!this.videoStatus.isPaused){
+                        this.setTimer_hideVideoControl()
+                    }
+                }
+                this.dom.style.cursor = null;
+            }
+
+            VideoComparison.prototype.hideVideoControl = function hideVideoControl(){
+                if (this.leftItem.isVideo || this.rightItem.isVideo){
+                    if (this.videoStatus.isPaused) return;
+                    if (this.elements.videoControls.getAttribute("mouseover")) return;
+                    if (this.isVideoControlLock) return;
+                }
+
+                const height = this.elements.videoControls.getBoundingClientRect().height;
+                this.elements.videoControls.style.bottom = -height + "px";
+                this.elements.videoControls.style.visibility = "hidden"
+                
+                if (this.leftItem.isVideo || this.rightItem.isVideo){
+                    this.dom.style.cursor = "none";
+                }
+                
+                this.isVideoControlActive = false;
+                
+
+                this.hideThumbnailPointer();
+                this.clearTimer_hideVideoControl();
+            }
+
+            VideoComparison.prototype.setTimer_hideVideoControl = function setTimer_hideVideoControl(){
+                this.utility.timer.setTimeout("hideVideoControl", () => {
+                    this.hideVideoControl();
+                    var mouseMoveHandler = (e) => {
+                        this.showVideoControl();
+                        this.dom.removeEventListener("mousemove", mouseMoveHandler);
+                    }
+
+                    this.dom.addEventListener("mousemove", mouseMoveHandler);
+                }, 3000);
+            }
+
+            VideoComparison.prototype.clearTimer_hideVideoControl = function clearTimer_hideVideoControl(){
+                this.utility.timer.clearTimeout("hideVideoControl");
+            }
+            
+
+            // ==================== Context Menu Functions ====================
+            VideoComparison.prototype.triggerContextMenuItem = function triggerContextMenuItem(element){
+                var name = element.getAttribute("name")
+                if (name === "show-fle-information"){
+                    this.toggleFileInformation()
+                }
+                else if (name === "show-splitter"){
+                    this.toggleSplitter();
+                }
+                else if (name === "show-thumbnail"){
+                    this.toggleThumbnail();
+                }
+                else if (name === "show-video-control"){
+                    this.toggleVideoControl();
+                }
+                else if (name === "show-left-item"){
+                    this.toggleLeftItem();
+                }
+                else if (name === "show-right-item"){
+                    this.toggleRightItem();
+                }
+                else if (name === "remove-left-item"){
+                    this.removeLeftItem();
+                    this.hideContextMenu();
+                }
+                else if (name === "remove-right-item"){
+                    this.removeRightItem();
+                    this.hideContextMenu();
+                }
+                else if (name === "fit-window"){
+                    this.fitWindow();
+                    this.hideContextMenu();
+                }
+                else if (name === "zoom-in"){
+                    this.zoomIn();
+                }
+                else if (name === "zoom-out"){
+                    this.zoomOut();
+                }
+                else if (name === "fullscreen"){
+                    this.toggleFullscreen();
+                    this.hideContextMenu();
+                }
+                else if (name === "play-pause"){
+                    this.togglePlayPause();
+                }
+                else if (name === "mute-unmute"){
+                    this.toogleMuteUnmute();
+                }
+                else if (name === "increase-volume"){
+                    this.increaseVolume();
+                }
+                else if (name === "decrease-volume"){
+                    this.decreaseVolume();
+                }
+                else if (name === "backward"){
+                    this.backward();
+                }
+                else if (name === "forward"){
+                    this.forward();
+                }
+                else if (name === "increase-playback-rate"){
+                    this.tooglePlaybackRate(true, false);
+                }
+                else if (name === "decrease-playback-rate"){
+                    this.tooglePlaybackRate(false, false);
+                }
+            }
+
+            VideoComparison.prototype.toggleFileInformation = function toggleFileInformation(){
+                var svg = this.dom.querySelector(".vc-context-menu div[name='show-fle-information'] .vc-context-menu-item-icon svg")
+                if (this.elements.leftInfo.style.display === "none"){
+                    this.elements.leftInfo.style.display = ""
+                    this.elements.rightInfo.style.display = ""
+                    if (svg) svg.style.display = ""
+                }
+                else{
+                    this.elements.leftInfo.style.display = "none"
+                    this.elements.rightInfo.style.display = "none"
+                    if (svg) svg.style.display = "none"
+                }
+            }
+
+            VideoComparison.prototype.toggleSplitter = function toggleSplitter(){
+                var svg = this.dom.querySelector(".vc-context-menu div[name='show-splitter'] .vc-context-menu-item-icon svg")
+                if (this.elements.splitter.style.display === "none"){
+                    this.elements.splitter.style.display = ""
+                    if (svg) svg.style.display = ""
+                }
+                else{
+                    this.elements.splitter.style.display = "none"
+                    if (svg) svg.style.display = "none"
+                }
+            }
+
+            VideoComparison.prototype.toggleThumbnail = function toggleThumbnail(){
+                var svg = this.dom.querySelector(".vc-context-menu div[name='show-thumbnail'] .vc-context-menu-item-icon svg")
+                if (this.elements.thumbnail.style.display === "none"){
+                    this.elements.thumbnail.style.display = ""
+                    if (svg) svg.style.display = ""
+                }
+                else{
+                    this.elements.thumbnail.style.display = "none"
+                    if (svg) svg.style.display = "none"
+                }
+            }
+
+            VideoComparison.prototype.toggleVideoControl = function toggleVideoControl(){
+                var svg = this.dom.querySelector(".vc-context-menu div[name='show-video-control'] .vc-context-menu-item-icon svg")
+                if (this.elements.videoControls.style.display === "none"){
+                    this.elements.videoControls.style.display = ""
+                    if (svg) svg.style.display = ""
+                }
+                else{
+                    this.elements.videoControls.style.display = "none"
+                    if (svg) svg.style.display = "none"
+                }
+            }
+
+            VideoComparison.prototype.toggleLeftItem = function toggleLeftItem(){
+                var svg = this.dom.querySelector(".vc-context-menu div[name='show-left-item'] .vc-context-menu-item-icon svg")
+                if (this.elements.leftContainer.style.display === "none"){
+                    this.elements.leftContainer.style.display = ""
+                    if (svg) svg.style.display = ""
+                }
+                else{
+                    this.elements.leftContainer.style.display = "none"
+                    if (svg) svg.style.display = "none"
+                }
+                this.changeVisibleContainer();
+            }
+
+            VideoComparison.prototype.toggleRightItem = function toggleRightItem(){
+                var svg = this.dom.querySelector(".vc-context-menu div[name='show-right-item'] .vc-context-menu-item-icon svg")
+                if (this.elements.rightContainer.style.display === "none"){
+                    this.elements.rightContainer.style.display = ""
+                    if (svg) svg.style.display = ""
+                }
+                else{
+                    this.elements.rightContainer.style.display = "none"
+                    if (svg) svg.style.display = "none"
+                }
+                this.changeVisibleContainer();
+            }
+
+            VideoComparison.prototype.removeLeftItem = function removeLeftItem(){
+                this.leftItem.fileName = "";
+                this.elements.leftImage.src = "";
+                this.elements.leftVideo.src = "";
+                this.elements.thumbnailImage.src = "";
+                this.elements.thumbnailVideo.src = "";
+                this.handleFileChange();
+            }
+
+            VideoComparison.prototype.removeRightItem = function removeRightItem(){
+                this.rightItem.fileName = "";
+                this.elements.rightImage.src = "";
+                this.elements.rightVideo.src = "";
+                this.handleFileChange();
+            }
+
+            VideoComparison.prototype.changeVisibleContainer = function changeVisibleContainer(){
+
+                var isShowLeftItem = this.elements.leftContainer.style.display !== "none"
+                var isShowRightItem = this.elements.rightContainer.style.display !== "none"
+
+                if (isShowLeftItem && isShowRightItem){
+                    this.moveSplitter(this.domWidth / 2);
+                    this.elements.splitter.style.visibility = ""
+                }
+                else if (isShowLeftItem){
+                    this.moveSplitter(this.domWidth);
+                    this.elements.splitter.style.visibility = "hidden"
+                }
+                else {
+                    this.moveSplitter(0);
+                    this.elements.splitter.style.visibility = "hidden"
+                }
+            }
+
+            VideoComparison.prototype.fitWindow = function fitWindow(){
+                var newScale = this.getFullWindowScale();
+                this.zoomAtDomPosition(this.domWidth / 2, this.domHeight/ 2, newScale)
+                this.moveZoomArea(0, 0, (this.domWidth - this.displayWidth) / 2, (this.domHeight - this.displayHeight) / 2)
+            }
+
+            VideoComparison.prototype.hideContextMenu = function hideContextMenu(){
+                if (this.isContextMenuActive){
+                    this.elements.contextMenu.style.visibility = "hidden";
+                    this.isContextMenuActive = false;
+
+                    if (this.elements.contextMenu.hideContextMenuHandler){
+                        this.dom.removeEventListener("contextmenu", this.elements.contextMenu.hideContextMenuHandler);
+                        document.removeEventListener("click", this.elements.contextMenu.hideContextMenuHandler);
+                        this.elements.contextMenu.hideContextMenuHandler = null;
+                    }
+                    
+                    if (this.elements.contextMenu.keydownHandler){
+                        document.removeEventListener("keydown", this.elements.contextMenu.keydownHandler);
+                        this.elements.contextMenu.keydownHandler = null;
+                    }
+                }
+            }
+
+
+            // Return the instance
+            return (selector, options) => {
+                return new VideoComparison(selector, options);
+            };
+        })();
+
+        var videoComparison = VideoComparison("#Video-Comparison");
+    </script>
+</body>
+</html>
